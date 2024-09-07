@@ -22,7 +22,7 @@ async function run() {
     const Teachers = database.collection("Teachers");
 
     app.get("/", async (req, res) => {
-      res.send("hello world.");
+      res.send("hello world");
     });
 
     //For Front End
