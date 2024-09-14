@@ -23,10 +23,6 @@ async function run() {
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
 
-    app.get("/", async (req, res) => {
-      res.send("hello world");
-    });
-
     // jwt related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -54,16 +50,26 @@ async function run() {
     // For New Users
     app.post("/users", async (req, res) => {
       const user = req.body;
-      const query = { email: user.email };
+      const query = { email: user.Email };
       const existingUser = await Users.findOne(query);
-      if (existingUser) {
+      const existingStudents = await Students.findOne(query);
+      const existingTeachers = await Teachers.findOne(query);
+      if ((existingUser, existingStudents, existingTeachers)) {
         return res.send({
           message: "user already exists",
           insertedId: null,
         });
+      } else if (user.role === "Teacher") {
+        const result = await Teachers.insertOne(user);
+        res.send(result);
+      } else if (user.role === "Student") {
+        const result = await Students.insertOne(user);
+        res.send(result);
       }
-      const result = await Users.insertOne(user);
-      res.send(result);
+      if (user.role === "User") {
+        const result = await Users.insertOne(user);
+        res.send(result);
+      }
     });
 
     app.get("/users", verifyToken, async (req, res) => {
