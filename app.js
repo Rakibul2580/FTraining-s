@@ -60,6 +60,8 @@ async function run() {
           insertedId: null,
         });
       } else if (user.role === "Teacher") {
+        user.status = "pending";
+        console.log("Inserting teacher with status:", user.status); // Debug log
         const result = await Teachers.insertOne(user);
         res.send(result);
       } else if (user.role === "Student") {
@@ -82,6 +84,43 @@ async function run() {
     //For Students
 
     //For Teachers
+
+    app.get("/teachers", async (req, res) => {
+      const { status } = req.query; // Get status from query (e.g., ?status=pending)
+
+      try {
+        let query = {};
+        if (status) {
+          query = { status: status }; // Filter based on the status
+        }
+        const teachers = await Teachers.find(query).toArray();
+        res.send(teachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+    // Update teacher status
+    app.put("/teachers/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      try {
+        const result = await Teachers.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status } }
+        );
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Teacher not found" });
+        }
+
+        res.send({ message: "Status updated successfully" });
+      } catch (error) {
+        console.error("Error updating teacher status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
 
     //For Admin
 
