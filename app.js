@@ -74,6 +74,31 @@ async function run() {
       }
     });
 
+    // Fetch user by email
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { Email: email };
+
+      try {
+        const user = await Users.findOne(query);
+        const student = await Students.findOne(query);
+        const teacher = await Teachers.findOne(query);
+
+        if (user) {
+          res.send({ role: user.role });
+        } else if (student) {
+          res.send({ role: student.role });
+        } else if (teacher) {
+          res.send({ role: teacher.role });
+        } else {
+          res.status(404).send({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
     app.get("/users", verifyToken, async (req, res) => {
       const result = await Users.find().toArray();
       res.send(result);
@@ -154,6 +179,7 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     // Update teacher status
     app.put("/teachers/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
@@ -172,6 +198,31 @@ async function run() {
         res.send({ message: "Status updated successfully" });
       } catch (error) {
         console.error("Error updating teacher status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // Update teacher schedule
+    app.patch("/teachers/:id/schedule", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { classSchedule } = req.body;
+
+      try {
+        const result = await Teachers.updateOne(
+          { _id: new ObjectId(id) },
+
+          {
+            $set: { schedule: classSchedule },
+          }
+        );
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Teacher not found" });
+        }
+
+        res.send({ message: "Schedule updated successfully" });
+      } catch (error) {
+        console.error("Error updating teacher schedule:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
