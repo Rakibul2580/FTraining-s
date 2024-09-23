@@ -87,9 +87,15 @@ async function run() {
         if (user) {
           res.send({ role: user.role });
         } else if (student) {
-          res.send({ role: student.role });
+          res.send({ role: student.role, status: student.status });
         } else if (teacher) {
-          res.send({ role: teacher.role });
+          res.send({
+            role: teacher.role,
+            status: teacher.status,
+            classTeachers: teacher.schedule.map(
+              (scheduleItem) => scheduleItem.classTeacher
+            ),
+          });
         } else {
           res.status(404).send({ message: "User not found" });
         }
@@ -107,15 +113,18 @@ async function run() {
     //For Front End
 
     //For Students
-
     app.get("/students", async (req, res) => {
-      const { status } = req.query;
+      const { status, class: className } = req.query;
 
       try {
         let query = {};
         if (status) {
-          query = { status: status };
+          query.status = status;
         }
+        if (className) {
+          query.Class = className;
+        }
+
         const students = await Students.find(query).toArray();
         res.send(students);
       } catch (error) {
@@ -123,6 +132,7 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     // Update Student status
     app.put("/students/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
