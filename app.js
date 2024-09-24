@@ -90,8 +90,13 @@ async function run() {
           res.send({ role: student.role, status: student.status });
         } else if (teacher) {
           res.send({
+            name: teacher.Name,
+            email: teacher.Email,
+            number: teacher.Number,
+            subject: teacher.Subject,
             role: teacher.role,
             status: teacher.status,
+            schedule: teacher.schedule,
             classTeachers: teacher.schedule.map(
               (scheduleItem) => scheduleItem.classTeacher
             ),
@@ -105,7 +110,41 @@ async function run() {
       }
     });
 
-    app.get("/users", verifyToken, async (req, res) => {
+    // For update teacher info
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const updatedData = req.body;
+
+      const transformedData = {
+        Name: updatedData.name,
+        Email: updatedData.email,
+        Number: updatedData.number,
+        Subject: updatedData.subject,
+        role: updatedData.role,
+        status: updatedData.status,
+        schedule: updatedData.schedule,
+        classTeachers: updatedData.classTeachers,
+      };
+
+      try {
+        const updatedUser = await Teachers.findOneAndUpdate(
+          { Email: email },
+          { $set: transformedData },
+          { new: true, upsert: true }
+        );
+
+        if (updatedUser) {
+          res.send(updatedUser);
+        } else {
+          res.status(404).send({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error("Error updating user data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.get("/users", async (req, res) => {
       const result = await Users.find().toArray();
       res.send(result);
     });
@@ -134,7 +173,7 @@ async function run() {
     });
 
     // Update Student status
-    app.put("/students/:id", verifyToken, async (req, res) => {
+    app.put("/students/:id", async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
 
@@ -173,7 +212,6 @@ async function run() {
     });
 
     //For Teachers
-
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
 
@@ -191,7 +229,7 @@ async function run() {
     });
 
     // Update teacher status
-    app.put("/teachers/:id", verifyToken, async (req, res) => {
+    app.put("/teachers/:id", async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
 
@@ -213,7 +251,7 @@ async function run() {
     });
 
     // Update teacher schedule
-    app.patch("/teachers/:id/schedule", verifyToken, async (req, res) => {
+    app.patch("/teachers/:id/schedule", async (req, res) => {
       const { id } = req.params;
       const { classSchedule } = req.body;
 
