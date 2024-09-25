@@ -172,8 +172,7 @@ async function run() {
       }
     });
 
-    // Update Student status , performance and rating.
-
+    // Update Student status , performance and rating
     app.patch("/students/:id", async (req, res) => {
       const { id } = req.params;
       const { status, feedback, performance } = req.body;
@@ -234,49 +233,26 @@ async function run() {
       }
     });
 
-    // Update teacher status
-    app.put("/teachers/:id", async (req, res) => {
+    // Update teacher status & Schedule
+    app.patch("/teachers/:id", async (req, res) => {
       const { id } = req.params;
-      const { status } = req.body;
-
+      const { status, classSchedule } = req.body;
       try {
+        const updateFields = {};
+        if (status) updateFields.status = status;
+        if (classSchedule) updateFields.schedule = classSchedule;
         const result = await Teachers.updateOne(
           { _id: new ObjectId(id) },
-          { $set: { status } }
+          { $set: updateFields }
         );
 
         if (result.modifiedCount === 0) {
           return res.status(404).send({ message: "Teacher not found" });
         }
 
-        res.send({ message: "Status updated successfully" });
+        res.send({ message: "Teacher updated successfully" });
       } catch (error) {
-        console.error("Error updating teacher status:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
-
-    // Update teacher schedule
-    app.patch("/teachers/:id/schedule", async (req, res) => {
-      const { id } = req.params;
-      const { classSchedule } = req.body;
-
-      try {
-        const result = await Teachers.updateOne(
-          { _id: new ObjectId(id) },
-
-          {
-            $set: { schedule: classSchedule },
-          }
-        );
-
-        if (result.modifiedCount === 0) {
-          return res.status(404).send({ message: "Teacher not found" });
-        }
-
-        res.send({ message: "Schedule updated successfully" });
-      } catch (error) {
-        console.error("Error updating teacher schedule:", error);
+        console.error("Error updating teacher:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
