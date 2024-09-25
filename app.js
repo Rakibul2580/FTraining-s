@@ -172,24 +172,30 @@ async function run() {
       }
     });
 
-    // Update Student status
-    app.put("/students/:id", async (req, res) => {
+    // Update Student status , performance and rating.
+
+    app.patch("/students/:id", async (req, res) => {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, feedback, performance } = req.body;
 
       try {
+        const updateFields = {};
+        if (status) updateFields.status = status;
+        if (feedback) updateFields.feedback = feedback;
+        if (performance) updateFields.performance = performance;
+
         const result = await Students.updateOne(
           { _id: new ObjectId(id) },
-          { $set: { status } }
+          { $set: updateFields }
         );
 
         if (result.modifiedCount === 0) {
           return res.status(404).send({ message: "Student not found" });
         }
 
-        res.send({ message: "Status updated successfully" });
+        res.send({ message: "Student updated successfully" });
       } catch (error) {
-        console.error("Error updating student status:", error);
+        console.error("Error updating student:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
