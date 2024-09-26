@@ -110,40 +110,6 @@ async function run() {
       }
     });
 
-    // For update teacher info
-    app.patch("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const updatedData = req.body;
-
-      const transformedData = {
-        Name: updatedData.name,
-        Email: updatedData.email,
-        Number: updatedData.number,
-        Subject: updatedData.subject,
-        role: updatedData.role,
-        status: updatedData.status,
-        schedule: updatedData.schedule,
-        classTeachers: updatedData.classTeachers,
-      };
-
-      try {
-        const updatedUser = await Teachers.findOneAndUpdate(
-          { Email: email },
-          { $set: transformedData },
-          { new: true, upsert: true }
-        );
-
-        if (updatedUser) {
-          res.send(updatedUser);
-        } else {
-          res.status(404).send({ message: "User not found" });
-        }
-      } catch (error) {
-        console.error("Error updating user data:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
-
     app.get("/users", async (req, res) => {
       const result = await Users.find().toArray();
       res.send(result);
@@ -236,23 +202,49 @@ async function run() {
     // Update teacher status & Schedule
     app.patch("/teachers/:id", async (req, res) => {
       const { id } = req.params;
-      const { status, classSchedule } = req.body;
+      const updatedData = req.body;
+      const updateFields = {};
+      if (updatedData.name) updateFields.Name = updatedData.name;
+      if (updatedData.email) updateFields.Email = updatedData.email;
+      if (updatedData.number) updateFields.Number = updatedData.number;
+      if (updatedData.subject) updateFields.Subject = updatedData.subject;
+      if (updatedData.role) updateFields.role = updatedData.role;
+      if (updatedData.status) updateFields.status = updatedData.status;
+      if (updatedData.schedule) updateFields.schedule = updatedData.schedule;
+      if (updatedData.classTeachers)
+        updateFields.classTeachers = updatedData.classTeachers;
+
       try {
-        const updateFields = {};
-        if (status) updateFields.status = status;
-        if (classSchedule) updateFields.schedule = classSchedule;
-        const result = await Teachers.updateOne(
+        const updatedTeacher = await Teachers.findOneAndUpdate(
           { _id: new ObjectId(id) },
-          { $set: updateFields }
+          { $set: updateFields },
+          { new: true, upsert: true }
         );
 
-        if (result.modifiedCount === 0) {
-          return res.status(404).send({ message: "Teacher not found" });
+        if (updatedTeacher) {
+          res.send(updatedTeacher);
+        } else {
+          res.status(404).send({ message: "Teacher not found" });
         }
-
-        res.send({ message: "Teacher updated successfully" });
       } catch (error) {
-        console.error("Error updating teacher:", error);
+        console.error("Error updating teacher data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.get("/teachers/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
+
+        if (teacher) {
+          res.send(teacher);
+        } else {
+          res.status(404).send({ message: "Teacher not found" });
+        }
+      } catch (error) {
+        console.error("Error fetching teacher data:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
