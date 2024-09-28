@@ -77,7 +77,7 @@ async function run() {
     // Fetch user by email
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { Email: email };
+      const query = { email: email };
 
       try {
         const user = await Users.findOne(query);
@@ -111,9 +111,10 @@ async function run() {
     });
 
     // Fetch user by id
+
     // app.get("/users/:id", async (req, res) => {
-    //   const id = req.params.id; // This should be the _id of the user
-    //   const query = { _id: new ObjectId(id) }; // Ensure this is correct
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
 
     //   try {
     //     const user = await Users.findOne(query);
@@ -229,7 +230,6 @@ async function run() {
       const { id } = req.params;
 
       try {
-        // Check if the ID is valid
         if (!ObjectId.isValid(id)) {
           return res.status(400).send({ message: "Invalid ID format" });
         }
@@ -285,15 +285,15 @@ async function run() {
       const { id } = req.params;
       const updatedData = req.body;
       const updateFields = {};
+
       if (updatedData.name) updateFields.Name = updatedData.name;
       if (updatedData.email) updateFields.Email = updatedData.email;
       if (updatedData.number) updateFields.Number = updatedData.number;
       if (updatedData.subject) updateFields.Subject = updatedData.subject;
       if (updatedData.role) updateFields.role = updatedData.role;
       if (updatedData.status) updateFields.status = updatedData.status;
-      if (updatedData.schedule) updateFields.schedule = updatedData.schedule;
-      if (updatedData.classTeachers)
-        updateFields.classTeachers = updatedData.classTeachers;
+      if (updatedData.classSchedule)
+        updateFields.classSchedule = updatedData.classSchedule;
 
       try {
         const updatedTeacher = await Teachers.findOneAndUpdate(
