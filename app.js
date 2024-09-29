@@ -148,7 +148,7 @@ async function run() {
     // });
 
     // Get Users
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       const result = await Users.find().toArray();
       res.send(result);
     });
@@ -156,7 +156,7 @@ async function run() {
     //For Front End
 
     //For Students
-    app.get("/students", async (req, res) => {
+    app.get("/students", verifyToken, async (req, res) => {
       const { status, class: className } = req.query;
 
       try {
@@ -177,7 +177,7 @@ async function run() {
     });
 
     // PATCH API to update status, performance and attendance
-    app.patch("/students/:id", async (req, res) => {
+    app.patch("/students/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { status, feedback, mark, attendanceStatus } = req.body;
 
@@ -226,7 +226,7 @@ async function run() {
       }
     });
 
-    app.get("/students/:id", async (req, res) => {
+    app.get("/students/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       try {
@@ -247,7 +247,7 @@ async function run() {
       }
     });
     // Delete a student's data
-    app.delete("/students/:id", async (req, res) => {
+    app.delete("/students/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       try {
@@ -316,6 +316,9 @@ async function run() {
     app.get("/teachers/:id", async (req, res) => {
       const { id } = req.params;
 
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid teacher ID format" });
+      }
       try {
         const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
 
