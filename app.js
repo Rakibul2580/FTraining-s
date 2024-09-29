@@ -263,6 +263,19 @@ async function run() {
       }
     });
 
+    // Get student class for the teacher Rakibul
+    app.get("/student/:class", async (req, res) => {
+      const classInfo = req.params.class;
+      try {
+        let query = { Class: classInfo }; // Matching field name with your database field (Class)
+        const students = await Students.find(query).toArray(); // Finding students of a particular class
+        res.send(students);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
     //For Teachers
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
@@ -313,14 +326,11 @@ async function run() {
       }
     });
 
-    app.get("/teachers/:id", async (req, res) => {
-      const { id } = req.params;
+    app.get("/teacher/:email", async (req, res) => {
+      const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
 
-      if (!ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid teacher ID format" });
-      }
       try {
-        const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
+        const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
 
         if (teacher) {
           res.send(teacher);
