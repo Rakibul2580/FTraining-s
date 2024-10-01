@@ -74,44 +74,43 @@ async function run() {
       }
     });
 
-    // Fetch user by email
-    app.get("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
+    // Fetch user by email [Delete]
+    // app.get("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email: email };
 
-      try {
-        const user = await Users.findOne(query);
-        const student = await Students.findOne(query);
-        const teacher = await Teachers.findOne(query);
+    //   try {
+    //     const user = await Users.findOne(query);
+    //     const student = await Students.findOne(query);
+    //     const teacher = await Teachers.findOne(query);
 
-        if (user) {
-          res.send({ role: user.role });
-        } else if (student) {
-          res.send({ role: student.role, status: student.status });
-        } else if (teacher) {
-          res.send({
-            name: teacher.Name,
-            email: teacher.Email,
-            number: teacher.Number,
-            subject: teacher.Subject,
-            role: teacher.role,
-            status: teacher.status,
-            schedule: teacher.schedule,
-            classTeachers: teacher.schedule.map(
-              (scheduleItem) => scheduleItem.classTeacher
-            ),
-          });
-        } else {
-          res.status(404).send({ message: "User not found" });
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
+    //     if (user) {
+    //       res.send({ role: user.role });
+    //     } else if (student) {
+    //       res.send({ role: student.role, status: student.status });
+    //     } else if (teacher) {
+    //       res.send({
+    //         name: teacher.Name,
+    //         email: teacher.Email,
+    //         number: teacher.Number,
+    //         subject: teacher.Subject,
+    //         role: teacher.role,
+    //         status: teacher.status,
+    //         schedule: teacher.schedule,
+    //         classTeachers: teacher.schedule.map(
+    //           (scheduleItem) => scheduleItem.classTeacher
+    //         ),
+    //       });
+    //     } else {
+    //       res.status(404).send({ message: "User not found" });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching user role:", error);
+    //     res.status(500).send({ message: "Internal Server Error" });
+    //   }
+    // });
 
-    // Fetch user by id
-
+    // Fetch user by id [Delete]
     // app.get("/users/:id", async (req, res) => {
     //   const id = req.params.id;
     //   const query = { _id: new ObjectId(id) };
@@ -147,37 +146,37 @@ async function run() {
     //   }
     // });
 
-    // Get Users
-    app.get("/users", verifyToken, async (req, res) => {
-      const result = await Users.find().toArray();
-      res.send(result);
-    });
+    // Get Users [Delete]
+    // app.get("/users", verifyToken, async (req, res) => {
+    //   const result = await Users.find().toArray();
+    //   res.send(result);
+    // });
 
     //For Front End
 
-    //For Students
-    app.get("/students", verifyToken, async (req, res) => {
-      const { status, class: className } = req.query;
+    //For Students [Delete]
+    // app.get("/students", verifyToken, async (req, res) => {
+    //   const { status, class: className } = req.query;
 
-      try {
-        let query = {};
-        if (status) {
-          query.status = status;
-        }
-        if (className) {
-          query.Class = className;
-        }
+    //   try {
+    //     let query = {};
+    //     if (status) {
+    //       query.status = status;
+    //     }
+    //     if (className) {
+    //       query.Class = className;
+    //     }
 
-        const students = await Students.find(query).toArray();
-        res.send(students);
-      } catch (error) {
-        console.error("Error fetching students:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
+    //     const students = await Students.find(query).toArray();
+    //     res.send(students);
+    //   } catch (error) {
+    //     console.error("Error fetching students:", error);
+    //     res.status(500).send({ message: "Internal Server Error" });
+    //   }
+    // });
 
     // PATCH API to update status, performance and attendance
-    app.patch("/students/:id", verifyToken, async (req, res) => {
+    app.patch("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { status, feedback, mark, attendanceStatus } = req.body;
 
@@ -226,28 +225,26 @@ async function run() {
       }
     });
 
-    app.get("/students/:id", verifyToken, async (req, res) => {
-      const { id } = req.params;
+    // [Delete]
+    // app.get("/student/:id", verifyToken, async (req, res) => {
+    //   const { id } = req.params;
 
-      try {
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ message: "Invalid ID format" });
-        }
+    //   try {
+    //     const student = await Students.findOne({ _id: new ObjectId(id) });
 
-        const student = await Students.findOne({ _id: new ObjectId(id) });
+    //     if (!student) {
+    //       return res.status(404).send({ message: "Student not found" });
+    //     }
 
-        if (!student) {
-          return res.status(404).send({ message: "Student not found" });
-        }
+    //     res.send(student);
+    //   } catch (error) {
+    //     console.error("Error retrieving student:", error);
+    //     res.status(500).send({ message: "Internal Server Error" });
+    //   }
+    // });
 
-        res.send(student);
-      } catch (error) {
-        console.error("Error retrieving student:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
     // Delete a student's data
-    app.delete("/students/:id", verifyToken, async (req, res) => {
+    app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       try {
@@ -264,8 +261,10 @@ async function run() {
     });
 
     // Get student class for the teacher Rakibul
-    app.get("/student/:class", async (req, res) => {
+    app.get("/students/:class", verifyToken, async (req, res) => {
       const classInfo = req.params.class;
+      console.log(classInfo);
+
       try {
         let query = { Class: classInfo }; // Matching field name with your database field (Class)
         const students = await Students.find(query).toArray(); // Finding students of a particular class
@@ -294,7 +293,7 @@ async function run() {
     });
 
     // Update teacher status & Schedule
-    app.patch("/teachers/:id", async (req, res) => {
+    app.patch("/teacher/:id", async (req, res) => {
       const { id } = req.params;
       const updatedData = req.body;
       const updateFields = {};
@@ -326,6 +325,7 @@ async function run() {
       }
     });
 
+    // Get teacher by email
     app.get("/teacher/:email", async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
 
@@ -344,7 +344,7 @@ async function run() {
     });
 
     // delete teacher
-    app.delete("/teachers/:id", async (req, res) => {
+    app.delete("/teacher/:id", async (req, res) => {
       const { id } = req.params;
 
       try {
