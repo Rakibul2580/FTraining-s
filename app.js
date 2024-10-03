@@ -49,7 +49,7 @@ async function run() {
 
     // For New Users
 
-    app.get("/users", async (req, res) => {
+    app.get("/", async (req, res) => {
       try {
         console.log("Fetching all students");
         const result = await Teachers.find({}).toArray();
