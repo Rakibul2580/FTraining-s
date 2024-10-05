@@ -48,6 +48,17 @@ async function run() {
     };
 
     // For New Users
+
+    app.get("/", async (req, res) => {
+      try {
+        console.log("Fetching all students");
+        const result = await Teachers.find({}).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.Email };
