@@ -263,7 +263,6 @@ async function run() {
     // Get student class for the teacher Rakibul
     app.get("/students/:class", verifyToken, async (req, res) => {
       const classInfo = req.params.class;
-      console.log(classInfo);
 
       try {
         let query = { Class: classInfo }; // Matching field name with your database field (Class)
