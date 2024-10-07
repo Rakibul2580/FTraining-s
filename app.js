@@ -164,6 +164,9 @@ async function run() {
     // });
 
     //For Front End
+    // -----------------------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------------
 
     //For Students [Delete]
     // app.get("/students", verifyToken, async (req, res) => {
@@ -345,32 +348,9 @@ async function run() {
       }
     });
 
-    // Delete this  [Nishi...]
-    app.get("/student/:id", async (req, res) => {
-      const { id } = req.params;
-
-      try {
-        // Validate the ID format
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ message: "Invalid student ID format" });
-        }
-
-        // Fetch student data from the database
-        const student = await Students.findOne({ _id: new ObjectId(id) });
-
-        if (!student) {
-          return res.status(404).send({ message: "Student not found" });
-        }
-
-        // Return the student data
-        res.send(student);
-      } catch (error) {
-        console.error("Error fetching student:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
-
-    // ----------------------------------------------------------
+    // --------------------------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------------
     //For Teachers
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
