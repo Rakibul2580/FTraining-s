@@ -240,6 +240,54 @@ async function run() {
     //   }
     // });
 
+    app.patch("/attendance/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { attendanceStatus } = req.body;
+      try {
+        const student = await Students.findOne({ _id: new ObjectId(id) });
+        const lastObject = student.attendance[student.attendance.length - 1];
+        const todayDate = new Date().toISOString().slice(0, 10);
+        if (
+          new Date(lastObject.date).toISOString().slice(0, 10) === todayDate
+        ) {
+          lastObject.status = attendanceStatus;
+          const result = await Students.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { attendance: student.attendance } }
+          );
+
+          if (result.modifiedCount > 0) {
+            res
+              .status(200)
+              .send({ message: "Attendance updated successfully!" });
+          } else {
+            res.status(500).send({ message: "Failed to update attendance" });
+          }
+        } else {
+          student.attendance.push({
+            date: new Date(),
+            status: attendanceStatus,
+          });
+
+          const result = await Students.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { attendance: student.attendance } }
+          );
+
+          if (result.modifiedCount > 0) {
+            res
+              .status(200)
+              .send({ message: "New attendance added successfully!" });
+          } else {
+            res.status(500).send({ message: "Failed to add new attendance" });
+          }
+        }
+      } catch (error) {
+        console.error("Error updating attendance:", error);
+        res.status(500).send({ message: "Server error" });
+      }
+    });
+
     // [Delete]
     // app.get("/student/:id", verifyToken, async (req, res) => {
     //   const { id } = req.params;
