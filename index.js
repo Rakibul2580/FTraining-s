@@ -245,8 +245,12 @@ async function run() {
       const { attendanceStatus } = req.body;
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        const lastObject = student.attendance[student.attendance.length - 1];
+        console.log(id, student);
+
+        const lastObject = student?.attendance[student?.attendance?.length - 1];
+        // console.log(id, student, lastObject);
         const todayDate = new Date().toISOString().slice(0, 10);
+
         if (
           new Date(lastObject.date).toISOString().slice(0, 10) === todayDate
         ) {
@@ -306,16 +310,14 @@ async function run() {
     //   }
     // });
 
-    // Nishi
+    // Update student's status, feedback and mark Nishi
     app.patch("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const { status, feedback, mark, attendanceStatus, teacherSubject } =
-        req.body;
+      const { status, feedback, mark, teacherSubject } = req.body;
 
       try {
         const updateFields = {
           $set: {},
-          $push: {},
         };
 
         if (status) {
@@ -334,18 +336,8 @@ async function run() {
             date: new Date(),
           };
         }
-        if (attendanceStatus) {
-          const attendanceEntry = {
-            date: new Date(),
-            status: attendanceStatus,
-          };
-          updateFields.$push.attendance = attendanceEntry;
-        }
         if (Object.keys(updateFields.$set).length === 0) {
           delete updateFields.$set;
-        }
-        if (Object.keys(updateFields.$push).length === 0) {
-          delete updateFields.$push;
         }
 
         const result = await Students.updateOne(
@@ -395,8 +387,7 @@ async function run() {
     });
 
     // --------------------------------------------------------------------------------------------------
-    // --------------------------------------------------------------------------------------------------
-    // --------------------------------------------------------------------------------------------------
+
     //For Teachers
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
@@ -481,6 +472,8 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
+    // ---------------------------------
 
     //For Admin
 
