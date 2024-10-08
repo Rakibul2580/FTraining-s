@@ -84,7 +84,6 @@ async function run() {
         res.send(result);
       }
     });
-    // ---------------
     // Fetch user by email [Delete]
     // app.get("/users/:email", async (req, res) => {
     //   const email = req.params.email;
