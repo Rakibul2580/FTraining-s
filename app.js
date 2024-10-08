@@ -264,8 +264,6 @@ async function run() {
       const { status, feedback, mark, attendanceStatus, teacherSubject } =
         req.body;
 
-      console.log(status);
-
       try {
         const updateFields = {
           $set: {},
