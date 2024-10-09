@@ -142,98 +142,65 @@ async function run() {
     // Result Api Nishi
     app.patch("/result/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const { result, teacherSubject } = req.body; // Remove feedback and keep date
+      const { result, teacherSubject } = req.body;
 
       try {
-        // Validate ObjectId
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ message: "Invalid student ID" });
-        }
-
-        // Find the student first
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        if (!student) {
-          return res.status(404).send({ message: "Student not found" });
-        }
 
-        // Prepare update fields
         const updateFields = {
           $set: {},
           $push: {},
         };
 
-        // Initialize results object if it doesn't exist
+        // Remove this
         if (!student.results) {
           student.results = {};
         }
 
-        // Initialize the subject if it doesn't exist
         if (!student.results[teacherSubject]) {
           student.results[teacherSubject] = [];
         }
 
-        // Create the new result entry with date
         const resultEntry = {
           result: result,
-          date: new Date(), // Add the current date
+          date: new Date(),
         };
 
-        // Push the new result entry to the specific subject's results
         updateFields.$push[`results.${teacherSubject}`] = resultEntry;
 
-        // Perform the update operation
         const resultUpdate = await Students.updateOne(
           { _id: new ObjectId(id) },
           updateFields
         );
 
-        // Check if the update was successful
         if (resultUpdate.modifiedCount === 0) {
-          return res.status(404).send({ message: "No changes made" });
+          return res
+            .status(404)
+            .send({ message: "No changes made", resultUpdate });
         }
 
-        // Fetch the updated student to send back in the response
-        const updatedStudent = await Students.findOne({
-          _id: new ObjectId(id),
-        });
-
-        // Convert the results to the desired format
-        const formattedResults = {};
-        for (const subject in updatedStudent.results) {
-          formattedResults[subject] = updatedStudent.results[subject].map(
-            (entry) => ({
-              result: entry.result,
-              date: entry.date, // Include date
-            })
-          );
-        }
-
-        // Send the response with the updated student's results
         res.send({
           message: "Results updated successfully",
-          results: formattedResults,
+          results: resultUpdate,
         });
       } catch (error) {
         console.error("Error updating results:", error);
         res.status(500).send({ message: "Internal Server Error", error });
       }
     });
+    // Performance Api Nishi
 
     app.patch("/performance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { performanceData, teacherSubject } = req.body;
 
       try {
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ message: "Invalid student ID" });
-        }
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        if (!student) {
-          return res.status(404).send({ message: "Student not found" });
-        }
+        // for first time performance add[remove this]
         if (!student.performance) {
           student.performance = {};
         }
+
         student.performance[teacherSubject] = [
           {
             feedback: performanceData.feedback,
@@ -263,19 +230,14 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error", error });
       }
     });
-    // Starus Api
+
+    // Status update Api
     app.patch("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
 
       try {
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ message: "Invalid student ID" });
-        }
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        if (!student) {
-          return res.status(404).send({ message: "Student not found" });
-        }
 
         const updateFields = {
           $set: {},
