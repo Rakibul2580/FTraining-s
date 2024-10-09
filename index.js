@@ -23,6 +23,9 @@ async function run() {
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
 
+    // info
+    const Info = database.collection("Info");
+
     // jwt related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -59,6 +62,7 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.Email };
@@ -469,6 +473,45 @@ async function run() {
       } catch (error) {
         console.error("Error deleting teacher:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // edit info
+    app.patch("/edit-info", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        // get existing data
+        const existingData = await Info.find({}).toArray();
+
+        if (existingData.length < 1) {
+          const data = await Info.insertOne(formData);
+
+          res.status(200).json({ msg: "success", data: data });
+        } else if (existingData.length > 0) {
+          const data = await Info.findOneAndUpdate(
+            { _id: existingData[0]._id },
+            { $set: formData },
+            { returnDocument: "after" }
+          );
+
+          res.status(200).json({ msg: "success", data: data });
+        }
+      } catch (error) {
+        res.status(500).json({ msg: "error", error: error });
+      }
+    });
+
+    // get info
+    app.get("/get-info", async (req, res) => {
+      try {
+        // get existing data
+        const existingData = await Info.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data: existingData[0] });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error: error });
       }
     });
 
