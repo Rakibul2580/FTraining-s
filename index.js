@@ -85,164 +85,19 @@ async function run() {
       }
     });
 
-    // Fetch user by email [Delete]
-    // app.get("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email: email };
-
-    //   try {
-    //     const user = await Users.findOne(query);
-    //     const student = await Students.findOne(query);
-    //     const teacher = await Teachers.findOne(query);
-
-    //     if (user) {
-    //       res.send({ role: user.role });
-    //     } else if (student) {
-    //       res.send({ role: student.role, status: student.status });
-    //     } else if (teacher) {
-    //       res.send({
-    //         name: teacher.Name,
-    //         email: teacher.Email,
-    //         number: teacher.Number,
-    //         subject: teacher.Subject,
-    //         role: teacher.role,
-    //         status: teacher.status,
-    //         schedule: teacher.schedule,
-    //         classTeachers: teacher.schedule.map(
-    //           (scheduleItem) => scheduleItem.classTeacher
-    //         ),
-    //       });
-    //     } else {
-    //       res.status(404).send({ message: "User not found" });
-    //     }
-    //   } catch (error) {
-    //     console.error("Error fetching user role:", error);
-    //     res.status(500).send({ message: "Internal Server Error" });
-    //   }
-    // });
-
-    // Fetch user by id [Delete]
-    // app.get("/users/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-
-    //   try {
-    //     const user = await Users.findOne(query);
-    //     const student = await Students.findOne(query);
-    //     const teacher = await Teachers.findOne(query);
-
-    //     if (user) {
-    //       res.send({ role: user.role });
-    //     } else if (student) {
-    //       res.send({ role: student.role, status: student.status });
-    //     } else if (teacher) {
-    //       res.send({
-    //         name: teacher.Name,
-    //         email: teacher.Email,
-    //         number: teacher.Number,
-    //         subject: teacher.Subject,
-    //         role: teacher.role,
-    //         status: teacher.status,
-    //         schedule: teacher.schedule,
-    //         classTeachers: teacher.schedule.map(
-    //           (scheduleItem) => scheduleItem.classTeacher
-    //         ),
-    //       });
-    //     } else {
-    //       res.status(404).send({ message: "User not found" });
-    //     }
-    //   } catch (error) {
-    //     console.error("Error fetching user role:", error);
-    //     res.status(500).send({ message: "Internal Server Error" });
-    //   }
-    // });
-
-    // Get Users [Delete]
-    // app.get("/users", verifyToken, async (req, res) => {
-    //   const result = await Users.find().toArray();
-    //   res.send(result);
-    // });
-
-    //For Front End
-
-    //For Students [Delete]
-    // app.get("/students", verifyToken, async (req, res) => {
-    //   const { status, class: className } = req.query;
-
-    //   try {
-    //     let query = {};
-    //     if (status) {
-    //       query.status = status;
-    //     }
-    //     if (className) {
-    //       query.Class = className;
-    //     }
-
-    //     const students = await Students.find(query).toArray();
-    //     res.send(students);
-    //   } catch (error) {
-    //     console.error("Error fetching students:", error);
-    //     res.status(500).send({ message: "Internal Server Error" });
-    //   }
-    // });
-
-    // PATCH API to update status, performance and attendance
-    app.patch("/student/:id", verifyToken, async (req, res) => {
-      const { id } = req.params;
-      const { status, feedback, mark, attendanceStatus } = req.body;
-
-      try {
-        const updateFields = {};
-        if (status) {
-          updateFields.$set = { status };
-        }
-        if (feedback && mark) {
-          updateFields.$push = {
-            performance: { feedback, mark },
-          };
-        }
-        if (attendanceStatus) {
-          const attendanceEntry = {
-            date: new Date(),
-            status: attendanceStatus,
-          };
-
-          if (updateFields.$push) {
-            updateFields.$push.attendance = attendanceEntry;
-          } else {
-            updateFields.$push = {
-              attendance: attendanceEntry,
-            };
-          }
-        }
-
-        if (!updateFields.$set) {
-          updateFields.$set = {};
-        }
-
-        const result = await Students.updateOne(
-          { _id: new ObjectId(id) },
-          updateFields
-        );
-
-        if (result.modifiedCount === 0) {
-          return res.status(404).send({ message: "Student not found" });
-        }
-
-        res.send({ message: "Student updated successfully" });
-      } catch (error) {
-        console.error("Error updating student:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
+    // For Students
 
     app.patch("/attendance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { attendanceStatus } = req.body;
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        const lastObject = student.attendance[student.attendance.length - 1];
+        console.log(id, student);
+
+        const lastObject = student?.attendance[student?.attendance?.length - 1];
+        // console.log(id, student, lastObject);
         const todayDate = new Date().toISOString().slice(0, 10);
+
         if (
           new Date(lastObject.date).toISOString().slice(0, 10) === todayDate
         ) {
@@ -284,23 +139,189 @@ async function run() {
       }
     });
 
+    // Result Api Nishi
+    app.patch("/result/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { result, teacherSubject } = req.body; // Remove feedback and keep date
+
+      try {
+        // Validate ObjectId
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid student ID" });
+        }
+
+        // Find the student first
+        const student = await Students.findOne({ _id: new ObjectId(id) });
+        if (!student) {
+          return res.status(404).send({ message: "Student not found" });
+        }
+
+        // Prepare update fields
+        const updateFields = {
+          $set: {},
+          $push: {},
+        };
+
+        // Initialize results object if it doesn't exist
+        if (!student.results) {
+          student.results = {};
+        }
+
+        // Initialize the subject if it doesn't exist
+        if (!student.results[teacherSubject]) {
+          student.results[teacherSubject] = [];
+        }
+
+        // Create the new result entry with date
+        const resultEntry = {
+          result: result,
+          date: new Date(), // Add the current date
+        };
+
+        // Push the new result entry to the specific subject's results
+        updateFields.$push[`results.${teacherSubject}`] = resultEntry;
+
+        // Perform the update operation
+        const resultUpdate = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          updateFields
+        );
+
+        // Check if the update was successful
+        if (resultUpdate.modifiedCount === 0) {
+          return res.status(404).send({ message: "No changes made" });
+        }
+
+        // Fetch the updated student to send back in the response
+        const updatedStudent = await Students.findOne({
+          _id: new ObjectId(id),
+        });
+
+        // Convert the results to the desired format
+        const formattedResults = {};
+        for (const subject in updatedStudent.results) {
+          formattedResults[subject] = updatedStudent.results[subject].map(
+            (entry) => ({
+              result: entry.result,
+              date: entry.date, // Include date
+            })
+          );
+        }
+
+        // Send the response with the updated student's results
+        res.send({
+          message: "Results updated successfully",
+          results: formattedResults,
+        });
+      } catch (error) {
+        console.error("Error updating results:", error);
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+
+    app.patch("/performance/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { performanceData, teacherSubject } = req.body;
+
+      try {
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid student ID" });
+        }
+        const student = await Students.findOne({ _id: new ObjectId(id) });
+        if (!student) {
+          return res.status(404).send({ message: "Student not found" });
+        }
+        if (!student.performance) {
+          student.performance = {};
+        }
+        student.performance[teacherSubject] = [
+          {
+            feedback: performanceData.feedback,
+            mark: performanceData.mark,
+            date: new Date(),
+          },
+        ];
+        const performanceUpdate = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { performance: student.performance } }
+        );
+
+        if (performanceUpdate.modifiedCount === 0) {
+          return res.status(204).send();
+        }
+
+        const updatedStudent = await Students.findOne({
+          _id: new ObjectId(id),
+        });
+        const responsePerformance = {
+          [teacherSubject]: updatedStudent.performance[teacherSubject],
+        };
+
+        res.send(responsePerformance);
+      } catch (error) {
+        console.error("Error updating performance:", error);
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+    // Starus Api
+    app.patch("/student/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      try {
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid student ID" });
+        }
+        const student = await Students.findOne({ _id: new ObjectId(id) });
+        if (!student) {
+          return res.status(404).send({ message: "Student not found" });
+        }
+
+        const updateFields = {
+          $set: {},
+        };
+        if (status) {
+          updateFields.$set.status = status;
+        }
+
+        const resultUpdate = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          updateFields
+        );
+        if (resultUpdate.modifiedCount === 0) {
+          return res.status(204).send();
+        }
+
+        const updatedStudent = await Students.findOne({
+          _id: new ObjectId(id),
+        });
+        res.send({
+          message: "Student updated successfully",
+          student: updatedStudent,
+        });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+
     // [Delete]
-    // app.get("/student/:id", verifyToken, async (req, res) => {
-    //   const { id } = req.params;
+    app.get("/student/:id", async (req, res) => {
+      const { id } = req.params;
 
-    //   try {
-    //     const student = await Students.findOne({ _id: new ObjectId(id) });
+      try {
+        const student = await Students.findOne({ _id: new ObjectId(id) });
 
-    //     if (!student) {
-    //       return res.status(404).send({ message: "Student not found" });
-    //     }
+        if (!student) {
+          return res.status(404).send({ message: "Student not found" });
+        }
 
-    //     res.send(student);
-    //   } catch (error) {
-    //     console.error("Error retrieving student:", error);
-    //     res.status(500).send({ message: "Internal Server Error" });
-    //   }
-    // });
+        res.send(student);
+      } catch (error) {
+        console.error("Error retrieving student:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
 
     // Delete a student's data
     app.delete("/student/:id", verifyToken, async (req, res) => {
@@ -322,7 +343,6 @@ async function run() {
     // Get student class for the teacher Rakibul
     app.get("/students/:class", verifyToken, async (req, res) => {
       const classInfo = req.params.class;
-      console.log(classInfo);
 
       try {
         let query = { Class: classInfo }; // Matching field name with your database field (Class)
@@ -333,6 +353,8 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
+    // ------------------------------------------------------------
 
     //For Teachers
     app.get("/teachers", async (req, res) => {
@@ -403,7 +425,7 @@ async function run() {
     });
 
     // delete teacher
-    app.delete("/teacher/:id", async (req, res) => {
+    app.delete("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       try {
@@ -418,6 +440,8 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
+    // ---------------------------------
 
     //For Admin
 
