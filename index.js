@@ -94,51 +94,46 @@ async function run() {
     app.patch("/attendance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { attendanceStatus } = req.body;
+
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        console.log(id, student);
-
-        const lastObject = student?.attendance[student?.attendance?.length - 1];
-        // console.log(id, student, lastObject);
         const todayDate = new Date().toISOString().slice(0, 10);
 
-        if (
-          new Date(lastObject.date).toISOString().slice(0, 10) === todayDate
-        ) {
-          lastObject.status = attendanceStatus;
-          const result = await Students.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: { attendance: student.attendance } }
-          );
+        let lastObject = null;
 
-          if (result.modifiedCount > 0) {
-            res
+        if (student.attendance?.length > 0) {
+          lastObject = student.attendance[student.attendance?.length - 1];
+
+          if (
+            new Date(lastObject.date).toISOString().slice(0, 10) === todayDate
+          ) {
+            lastObject.status = attendanceStatus;
+            await Students.updateOne(
+              { _id: new ObjectId(id) },
+              { $set: { attendance: student.attendance } }
+            );
+            return res
               .status(200)
               .send({ message: "Attendance updated successfully!" });
-          } else {
-            res.status(500).send({ message: "Failed to update attendance" });
-          }
-        } else {
-          student.attendance.push({
-            date: new Date(),
-            status: attendanceStatus,
-          });
-
-          const result = await Students.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: { attendance: student.attendance } }
-          );
-
-          if (result.modifiedCount > 0) {
-            res
-              .status(200)
-              .send({ message: "New attendance added successfully!" });
-          } else {
-            res.status(500).send({ message: "Failed to add new attendance" });
           }
         }
+
+        // নতুন attendance যোগ করা
+        student.attendance.push({
+          date: new Date(),
+          status: attendanceStatus,
+        });
+
+        await Students.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { attendance: student.attendance } }
+        );
+
+        return res
+          .status(200)
+          .send({ message: "New attendance added successfully!" });
       } catch (error) {
-        console.error("Error updating attendance:", error);
+        console.error("Error updating attendance:", error.message);
         res.status(500).send({ message: "Server error" });
       }
     });
@@ -201,17 +196,20 @@ async function run() {
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
         // for first time performance add[remove this]
+        console.log(student);
         if (!student.performance) {
           student.performance = {};
         }
 
-        student.performance[teacherSubject] = [
-          {
-            feedback: performanceData.feedback,
-            mark: performanceData.mark,
-            date: new Date(),
-          },
-        ];
+        if (!student.performance[teacherSubject]) {
+          student.performance[teacherSubject] = [];
+        }
+
+        student.performance[teacherSubject].push({
+          feedback: performanceData.feedback,
+          mark: performanceData.mark,
+          date: new Date(),
+        });
         const performanceUpdate = await Students.updateOne(
           { _id: new ObjectId(id) },
           { $set: { performance: student.performance } }
