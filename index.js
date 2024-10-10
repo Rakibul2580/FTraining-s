@@ -420,10 +420,9 @@ async function run() {
 
           res.status(200).json({ msg: "success", data: data });
         } else if (existingData.length > 0) {
-          const data = await Info.findOneAndUpdate(
+          const data = await Info.updateOne(
             { _id: existingData[0]._id },
-            { $set: formData },
-            { returnDocument: "after" }
+            { $set: formData }
           );
 
           res.status(200).json({ msg: "success", data: data });
