@@ -51,7 +51,6 @@ async function run() {
     };
 
     // For New Users
-
     app.get("/", async (req, res) => {
       try {
         console.log("Fetching all students");
@@ -90,7 +89,6 @@ async function run() {
     });
 
     // For Students
-
     app.patch("/attendance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { attendanceStatus } = req.body;
@@ -187,8 +185,8 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error", error });
       }
     });
-    // Performance Api Nishi
 
+    // Performance Api Nishi
     app.patch("/performance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { performanceData, teacherSubject } = req.body;
@@ -320,7 +318,7 @@ async function run() {
 
     // ------------------------------------------------------------
 
-    //For Teachers
+    //For Teachers (used in Home and All-Teacher Route)
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
 
@@ -338,7 +336,7 @@ async function run() {
     });
 
     // Update teacher status & Schedule
-    app.patch("/teacher/:id", async (req, res) => {
+    app.patch("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const updatedData = req.body;
       const updateFields = {};
