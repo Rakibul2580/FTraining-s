@@ -23,6 +23,7 @@ async function run() {
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
     const Notices = database.collection("Notices");
+    const Events = database.collection("Events");
 
     // info
     const Info = database.collection("Info");
@@ -447,17 +448,14 @@ async function run() {
 
     // create new notice
     app.post("/notices/create", async (req, res) => {
-      const { type, title, details, createdBy } = req.body;
-      if (!type || !title || !details || !createdBy) {
+      const { type, title, details } = req.body;
+      if (!type || !title || !details) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
 
       try {
         const data = await Notices.insertOne({
-          type,
-          title,
-          details,
-          createdBy,
+          ...req.body,
           createdAt: new Date(),
         });
 
@@ -472,6 +470,38 @@ async function run() {
     app.get("/notices", async (req, res) => {
       try {
         const data = await Notices.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // create event
+    app.post("/events/create", async (req, res) => {
+      const { date, time, title, details, image } = req.body;
+
+      if (!date || !time || !title || !details || !image) {
+        return res.status(406).json({ msg: "failed", msg: "missing fields" });
+      }
+
+      try {
+        const data = await Events.insertOne({
+          ...req.body,
+          createdAt: new Date(),
+        });
+
+        res.status(201).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get events
+    app.get("/events", async (req, res) => {
+      try {
+        const data = await Events.find({}).toArray();
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
