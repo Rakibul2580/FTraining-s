@@ -552,6 +552,18 @@ async function run() {
 
     // ---------------------------------
     // payment api [Nishi]
+    // app.post("/fees", verifyToken, async (req, res) => {
+    //   const {
+    //     paymentMethod,
+    //     transactionId,
+    //     transactionNumber,
+    //     paymentDate,
+    //     discount,
+    //     studentId,
+    //   } = req.body;
+    //   const status = "pending";
+
+    // payment api [Nishi]
     app.post("/fees", verifyToken, async (req, res) => {
       const {
         paymentMethod,
