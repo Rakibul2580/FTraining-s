@@ -56,12 +56,57 @@ async function run() {
     // For New Users
     app.get("/", async (req, res) => {
       try {
-        console.log("Fetching all students");
-        const result = await Teachers.find({}).toArray();
-        res.send(result);
+        // সকল শিক্ষার্থীর ডেটা বের করা
+        const students = await Students.find({}).toArray();
+
+        // প্রতিটি শিক্ষার্থীর ডেটাতে নতুন fees ফিল্ড যোগ করা
+        // for (const student of students) {
+        //   await Students.updateOne(
+        //     { _id: student._id },
+        //     { $set: { fees: [] } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
+        //   );
+        // }
+
+        res.send({ message: "Fees field added to all students successfully!" });
       } catch (error) {
         console.error("Error fetching students:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+    app.patch("/addFees", verifyToken, async (req, res) => {
+      const query = req.body;
+      console.log(query);
+
+      try {
+        const students = await Students.find({ Class: query.class }).toArray();
+        // প্রতিটি শিক্ষার্থীর fees অ্যারেতে নতুন কুইরি পুশ করা
+        for (const student of students) {
+          await Students.updateOne(
+            { _id: student._id },
+            { $push: { fees: query } } // fees ফিল্ডে নতুন কুইরি পুশ করা হচ্ছে
+          );
+        }
+        // for (const student of students) {
+        //   await Students.updateOne(
+        //     { _id: student._id },
+        //     { $pull: { fees: query } } // fees ফিল্ড থেকে নির্দিষ্ট কুইরি রিমুভ করা হচ্ছে
+        //   );
+        // }
+
+        // প্রতিটি শিক্ষার্থীর ডেটাতে নতুন fees ফিল্ড যোগ করা
+        // for (const student of students) {
+        //   await Students.updateOne(
+        //     { _id: student._id },
+        //     { $set: { fees: [] } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
+        //   );
+        // }
+
+        res.status(200).send({
+          message: "Query added to all students in Class 1 successfully!",
+        });
+      } catch (error) {
+        console.error("Error updating attendance:", error.message);
+        res.status(500).send({ message: "Server error" });
       }
     });
 
@@ -440,9 +485,10 @@ async function run() {
       }
     });
     // create new notice
-    app.post("/notices/create", async (req, res) => {
-      const { type, title, details, createdBy } = req.body;
-      if (!type || !title || !details || !createdBy) {
+    app.post("/notices/create", verifyToken, async (req, res) => {
+      const { type, title, details } = req.body;
+      console.log(req.body);
+      if (!type || !title || !details) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
 
@@ -451,7 +497,6 @@ async function run() {
           type,
           title,
           details,
-          createdBy,
           createdAt: new Date(),
         });
 
