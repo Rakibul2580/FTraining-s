@@ -24,6 +24,7 @@ async function run() {
     const Teachers = database.collection("Teachers");
     const Notices = database.collection("Notices");
     const Events = database.collection("Events");
+    const ClassRoutine = database.collection("ClassRoutine");
 
     // info
     const Info = database.collection("Info");
@@ -409,7 +410,7 @@ async function run() {
     });
 
     // edit info
-    app.patch("/edit-info", async (req, res) => {
+    app.post("/edit-info", async (req, res) => {
       const formData = req.body;
 
       try {
@@ -506,6 +507,52 @@ async function run() {
         res.status(200).json({ msg: "success", data });
       } catch (error) {
         res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // update class routine
+    app.post("/class-routine", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        // get existing data
+        const existingData = await ClassRoutine.find({}).toArray();
+
+        if (existingData.length < 1) {
+          const data = await ClassRoutine.insertOne({
+            name: "class-routine",
+            data: formData,
+          });
+
+          res.status(200).json({ msg: "success", data: data });
+        } else if (existingData.length > 0) {
+          const data = await ClassRoutine.findOneAndUpdate(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                data: formData,
+              },
+            },
+            { returnDocument: "after" }
+          );
+
+          res.status(200).json({ msg: "success", data });
+        }
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get info
+    app.get("/class-routine", async (req, res) => {
+      try {
+        // get existing data
+        const existingData = await ClassRoutine.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data: existingData[0] });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error: error });
       }
     });
 
