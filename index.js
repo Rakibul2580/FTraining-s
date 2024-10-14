@@ -22,6 +22,8 @@ async function run() {
     const Users = database.collection("Users");
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
+    const Fees = database.collection("Fees");
+    const Notices = database.collection("Notices");
 
     // info
     const Info = database.collection("Info");
@@ -268,20 +270,6 @@ async function run() {
       }
     });
 
-    // [Delete]
-    // app.get("/student/:id", async (req, res) => {
-    //   const { id } = req.params;
-
-    //   try {
-    //     const student = await Students.findOne({ _id: new ObjectId(id) });
-
-    //     res.send(student);
-    //   } catch (error) {
-    //     console.error("Error retrieving student:", error);
-    //     res.status(500).send({ message: "Internal Server Error" });
-    //   }
-    // });
-
     // Get student by email [Nishi for getting student in Fees Management]
     app.get("/student/:email", verifyToken, async (req, res) => {
       const { email } = req.params;
@@ -451,7 +439,6 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
-
     // create new notice
     app.post("/notices/create", async (req, res) => {
       const { type, title, details, createdBy } = req.body;
