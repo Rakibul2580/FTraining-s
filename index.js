@@ -22,6 +22,8 @@ async function run() {
     const Users = database.collection("Users");
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
+    const Fees = database.collection("Fees");
+    const Notices = database.collection("Notices");
 
     // info
     const Info = database.collection("Info");
@@ -41,6 +43,7 @@ async function run() {
         return res.status(403).send({ message: "No token provided" });
       }
       const token = req.headers.authorization.split(" ")[1];
+
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
           return res.status(401).send({ message: "Invalid token" });
@@ -51,7 +54,6 @@ async function run() {
     };
 
     // For New Users
-
     app.get("/", async (req, res) => {
       try {
         console.log("Fetching all students");
@@ -90,7 +92,6 @@ async function run() {
     });
 
     // For Students
-
     app.patch("/attendance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { attendanceStatus } = req.body;
@@ -187,8 +188,8 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error", error });
       }
     });
-    // Performance Api Nishi
 
+    // Performance Api Nishi
     app.patch("/performance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { performanceData, teacherSubject } = req.body;
@@ -269,18 +270,17 @@ async function run() {
       }
     });
 
-    // [Delete]
-    app.get("/student/:id", async (req, res) => {
-      const { id } = req.params;
+    // Get student by email [Nishi for getting student in Fees Management]
+    app.get("/student/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
 
       try {
-        const student = await Students.findOne({ _id: new ObjectId(id) });
-
-        if (!student) {
-          return res.status(404).send({ message: "Student not found" });
+        const student = await Students.findOne({ Email: email });
+        if (student) {
+          res.send(student);
+        } else {
+          res.status(404).send({ message: "Student not found" });
         }
-
-        res.send(student);
       } catch (error) {
         console.error("Error retrieving student:", error);
         res.status(500).send({ message: "Internal Server Error" });
@@ -318,9 +318,7 @@ async function run() {
       }
     });
 
-    // ------------------------------------------------------------
-
-    //For Teachers
+    //For Teachers (used in Home and All-Teacher Route)
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
 
@@ -338,7 +336,7 @@ async function run() {
     });
 
     // Update teacher status & Schedule
-    app.patch("/teacher/:id", async (req, res) => {
+    app.patch("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const updatedData = req.body;
       const updateFields = {};
@@ -429,7 +427,6 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
-
     // get info
     app.get("/get-info", async (req, res) => {
       try {
@@ -442,10 +439,98 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
+    // create new notice
+    app.post("/notices/create", async (req, res) => {
+      const { type, title, details, createdBy } = req.body;
+      if (!type || !title || !details || !createdBy) {
+        return res.status(406).json({ msg: "failed", msg: "missing fields" });
+      }
 
-    // ---------------------------------
+      try {
+        const data = await Notices.insertOne({
+          type,
+          title,
+          details,
+          createdBy,
+          createdAt: new Date(),
+        });
 
-    //For Admin
+        res.status(201).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get all notice
+    app.get("/notices", async (req, res) => {
+      try {
+        const data = await Notices.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // payment api [Nishi]
+    app.post("/fees", verifyToken, async (req, res) => {
+      const {
+        paymentMethod,
+        transactionId,
+        transactionNumber,
+        paymentDate,
+        discount,
+        studentId,
+      } = req.body;
+      const status = "pending";
+
+      try {
+        const newFee = {
+          paymentMethod,
+          transactionId,
+          transactionNumber,
+          paymentDate,
+          discount,
+          studentId,
+          status,
+        };
+
+        const result = await Fees.insertOne(newFee);
+        res.status(201).send({ message: "Fee submitted successfully", result });
+      } catch (error) {
+        console.error("Error submitting fee:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // get all fees [Nishi]
+    app.get("/fees", verifyToken, async (req, res) => {
+      try {
+        const fees = await Fees.find({}).toArray();
+        res.status(200).send(fees);
+      } catch (error) {
+        console.error("Error fetching fees:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // update fee status [Nishi]
+    app.patch("/fee/:id", verifyToken, async (req, res) => {
+      const feeId = req.params.id;
+      const { status } = req.body;
+
+      try {
+        const updatedFee = await Fees.updateOne(
+          { _id: new ObjectId(feeId) },
+          { $set: { status: status } }
+        );
+        res.status(200).send({ message: `Fee status updated to ${status}` });
+      } catch (error) {
+        console.error("Error updating fee status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
 
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`);
