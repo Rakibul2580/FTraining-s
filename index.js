@@ -22,7 +22,6 @@ async function run() {
     const Users = database.collection("Users");
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
-    const Fees = database.collection("Fees");
 
     // info
     const Info = database.collection("Info");
@@ -42,6 +41,7 @@ async function run() {
         return res.status(403).send({ message: "No token provided" });
       }
       const token = req.headers.authorization.split(" ")[1];
+
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
           return res.status(401).send({ message: "Invalid token" });
@@ -449,6 +449,40 @@ async function run() {
       } catch (error) {
         console.log("error", error);
         res.status(500).json({ msg: "error", error: error });
+      }
+    });
+
+    // create new notice
+    app.post("/notices/create", async (req, res) => {
+      const { type, title, details, createdBy } = req.body;
+      if (!type || !title || !details || !createdBy) {
+        return res.status(406).json({ msg: "failed", msg: "missing fields" });
+      }
+
+      try {
+        const data = await Notices.insertOne({
+          type,
+          title,
+          details,
+          createdBy,
+          createdAt: new Date(),
+        });
+
+        res.status(201).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get all notice
+    app.get("/notices", async (req, res) => {
+      try {
+        const data = await Notices.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "failed", error });
       }
     });
 
