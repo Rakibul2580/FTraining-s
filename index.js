@@ -26,6 +26,7 @@ async function run() {
     const Notices = database.collection("Notices");
     const Events = database.collection("Events");
     const ClassRoutine = database.collection("ClassRoutine");
+    const ExamRoutine = database.collection("ExamRoutine");
 
     // info
     const Info = database.collection("Info");
@@ -75,6 +76,7 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     app.patch("/addFees", verifyToken, async (req, res) => {
       const query = req.body;
       console.log(query);
@@ -507,6 +509,7 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
+
     // get info
     app.get("/get-info", async (req, res) => {
       try {
@@ -519,6 +522,7 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
+
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
       const { type, title, details } = req.body;
@@ -619,7 +623,7 @@ async function run() {
       }
     });
 
-    // get info
+    // get routine
     app.get("/class-routine", async (req, res) => {
       try {
         // get existing data
@@ -632,18 +636,50 @@ async function run() {
       }
     });
 
-    // ---------------------------------
-    // payment api [Nishi]
-    // app.post("/fees", verifyToken, async (req, res) => {
-    //   const {
-    //     paymentMethod,
-    //     transactionId,
-    //     transactionNumber,
-    //     paymentDate,
-    //     discount,
-    //     studentId,
-    //   } = req.body;
-    //   const status = "pending";
+    // exam routine create and update
+    app.post("/exam-routine", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        // get existing data
+        const existingData = await ExamRoutine.find({}).toArray();
+
+        if (existingData.length < 1) {
+          const data = await ExamRoutine.insertOne({
+            name: "exam-routine",
+            data: formData,
+          });
+
+          res.status(200).json({ msg: "success", data });
+        } else if (existingData.length > 0) {
+          const data = await ExamRoutine.findOneAndUpdate(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                data: formData,
+              },
+            },
+            { returnDocument: "after" }
+          );
+
+          res.status(200).json({ msg: "success", data });
+        }
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get exam routine
+    app.get("/exam-routine", async (req, res) => {
+      try {
+        // get existing data
+        const existingData = await ExamRoutine.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data: existingData[0] });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error: error });
+      }
+    });
 
     // payment api [Nishi]
     app.post("/fees", verifyToken, async (req, res) => {
