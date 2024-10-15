@@ -24,6 +24,9 @@ async function run() {
     const Teachers = database.collection("Teachers");
     const Fees = database.collection("Fees");
     const Notices = database.collection("Notices");
+    const Events = database.collection("Events");
+    const ClassRoutine = database.collection("ClassRoutine");
+    const ExamRoutine = database.collection("ExamRoutine");
 
     // info
     const Info = database.collection("Info");
@@ -73,6 +76,7 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     app.patch("/addFees", verifyToken, async (req, res) => {
       const query = req.body;
       console.log(query);
@@ -316,7 +320,7 @@ async function run() {
     });
 
     // Get student by email [Nishi for getting student in Fees Management]
-    app.get("/student/:email", verifyToken, async (req, res) => {
+    app.get("/student/:email", async (req, res) => {
       const { email } = req.params;
       try {
         const student = await Students.findOne({ Email: email });
@@ -448,7 +452,7 @@ async function run() {
     });
 
     // edit info
-    app.patch("/edit-info", async (req, res) => {
+    app.post("/edit-info", async (req, res) => {
       const formData = req.body;
 
       try {
@@ -471,6 +475,7 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
+
     // get info
     app.get("/get-info", async (req, res) => {
       try {
@@ -483,6 +488,7 @@ async function run() {
         res.status(500).json({ msg: "error", error: error });
       }
     });
+
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
       const { type, title, details } = req.body;
@@ -493,6 +499,7 @@ async function run() {
 
       try {
         const data = await Notices.insertOne({
+          ...req.body,
           type,
           title,
           details,
@@ -514,6 +521,129 @@ async function run() {
         res.status(200).json({ msg: "success", data });
       } catch (error) {
         res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // create event
+    app.post("/events/create", async (req, res) => {
+      const { date, time, title, details, image } = req.body;
+
+      if (!date || !time || !title || !details || !image) {
+        return res.status(406).json({ msg: "failed", msg: "missing fields" });
+      }
+
+      try {
+        const data = await Events.insertOne({
+          ...req.body,
+          createdAt: new Date(),
+        });
+
+        res.status(201).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get events
+    app.get("/events", async (req, res) => {
+      try {
+        const data = await Events.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // update class routine
+    app.post("/class-routine", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        // get existing data
+        const existingData = await ClassRoutine.find({}).toArray();
+
+        if (existingData.length < 1) {
+          const data = await ClassRoutine.insertOne({
+            name: "class-routine",
+            data: formData,
+          });
+
+          res.status(200).json({ msg: "success", data: data });
+        } else if (existingData.length > 0) {
+          const data = await ClassRoutine.findOneAndUpdate(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                data: formData,
+              },
+            },
+            { returnDocument: "after" }
+          );
+
+          res.status(200).json({ msg: "success", data });
+        }
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get routine
+    app.get("/class-routine", async (req, res) => {
+      try {
+        // get existing data
+        const existingData = await ClassRoutine.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data: existingData[0] });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error: error });
+      }
+    });
+
+    // exam routine create and update
+    app.post("/exam-routine", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        // get existing data
+        const existingData = await ExamRoutine.find({}).toArray();
+
+        if (existingData.length < 1) {
+          const data = await ExamRoutine.insertOne({
+            name: "exam-routine",
+            data: formData,
+          });
+
+          res.status(200).json({ msg: "success", data });
+        } else if (existingData.length > 0) {
+          const data = await ExamRoutine.findOneAndUpdate(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                data: formData,
+              },
+            },
+            { returnDocument: "after" }
+          );
+
+          res.status(200).json({ msg: "success", data });
+        }
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get exam routine
+    app.get("/exam-routine", async (req, res) => {
+      try {
+        // get existing data
+        const existingData = await ExamRoutine.find({}).toArray();
+
+        res.status(200).json({ msg: "success", data: existingData[0] });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error: error });
       }
     });
 
