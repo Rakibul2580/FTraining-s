@@ -273,11 +273,12 @@ async function run() {
     });
 
     // Get student by email [Nishi for getting student in Fees Management]
-    app.get("/student/:email", verifyToken, async (req, res) => {
+    app.get("/student/:email", async (req, res) => {
       const { email } = req.params;
 
       try {
         const student = await Students.findOne({ Email: email });
+
         if (student) {
           res.send(student);
         } else {
@@ -286,6 +287,39 @@ async function run() {
       } catch (error) {
         console.error("Error retrieving student:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // update student profile
+    app.patch("/update-student/:email", async (req, res) => {
+      const { email } = req.params;
+      const formdata = req.body;
+      console.log("formdata", formdata);
+
+      try {
+        const existingStudent = await Students.findOne({ Email: email });
+
+        if (!existingStudent) {
+          return res.status(404).json({ msg: "student not found" });
+        }
+
+        if (existingStudent) {
+          const data = await Students.findOneAndUpdate(
+            { Email: email },
+            {
+              $set: formdata,
+            },
+            { returnDocument: "after" }
+          );
+
+          res.status(200).send({
+            message: "Student updated successfully",
+            student: data,
+          });
+        }
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).send({ message: "Internal Server Error", error });
       }
     });
 
