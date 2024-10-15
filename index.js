@@ -335,56 +335,6 @@ async function run() {
       }
     });
 
-    // Get student by email [Rakibul for getting student in Fees Management]
-    app.get("/email/:email", verifyToken, async (req, res) => {
-      const { email } = req.params;
-      console.log(req.params);
-      try {
-        const student = await Students.findOne({ Email: email });
-
-        if (student) {
-          res.send(student);
-        } else {
-          res.status(404).send({ message: "Student not found" });
-        }
-      } catch (error) {
-        console.error("Error retrieving student:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
-
-    // update student profile
-    app.patch("/update-student/:email", async (req, res) => {
-      const { email } = req.params;
-      const formdata = req.body;
-
-      try {
-        const existingStudent = await Students.findOne({ Email: email });
-
-        if (!existingStudent) {
-          return res.status(404).json({ msg: "student not found" });
-        }
-
-        if (existingStudent) {
-          const data = await Students.findOneAndUpdate(
-            { Email: email },
-            {
-              $set: { ...formdata, img: formdata.pictures[0] },
-            },
-            { returnDocument: "after" }
-          );
-
-          res.status(200).send({
-            message: "Student updated successfully",
-            student: data,
-          });
-        }
-      } catch (error) {
-        console.error("Error updating student:", error);
-        res.status(500).send({ message: "Internal Server Error", error });
-      }
-    });
-
     // Delete a student's data
     app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
