@@ -339,7 +339,6 @@ async function run() {
     app.patch("/update-student/:email", async (req, res) => {
       const { email } = req.params;
       const formdata = req.body;
-      console.log("formdata", formdata);
 
       try {
         const existingStudent = await Students.findOne({ Email: email });
@@ -352,7 +351,7 @@ async function run() {
           const data = await Students.findOneAndUpdate(
             { Email: email },
             {
-              $set: formdata,
+              $set: { ...formdata, img: formdata.pictures[0] },
             },
             { returnDocument: "after" }
           );
