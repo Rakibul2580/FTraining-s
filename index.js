@@ -27,6 +27,7 @@ async function run() {
     const Events = database.collection("Events");
     const ClassRoutine = database.collection("ClassRoutine");
     const ExamRoutine = database.collection("ExamRoutine");
+    const Application = database.collection("Application");
 
     // info
     const Info = database.collection("Info");
@@ -662,7 +663,6 @@ async function run() {
         paymentMethod,
         transactionId,
         transactionNumber,
-        paymentDate,
         discount,
         studentId,
       } = req.body;
@@ -673,7 +673,7 @@ async function run() {
           paymentMethod,
           transactionId,
           transactionNumber,
-          paymentDate,
+          paymentDate: new Date(),
           discount,
           studentId,
           status,
@@ -713,6 +713,44 @@ async function run() {
         res.status(200).send({ message: `Fee status updated to ${status}` });
       } catch (error) {
         console.error("Error updating fee status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // [Nishi]
+    // Api for post an Application, used in Application.jsx page of Teacher Dashboard..
+    app.post("/application", verifyToken, async (req, res) => {
+      const { subject, message, teacherId, teacherName } = req.body;
+      const status = "pending";
+
+      try {
+        const newApplication = {
+          subject,
+          message,
+          teacherId,
+          teacherName,
+          status,
+          submittedAt: new Date(),
+        };
+
+        const result = await Application.insertOne(newApplication);
+        res
+          .status(201)
+          .send({ message: "Application submitted successfully", result });
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // [Nishi]
+    // To fetch applications on the ApplicationManagement.jsx page for the admin dashboard, but it's currently being used in the teacher dashboard as well.
+    app.get("/applications", verifyToken, async (req, res) => {
+      try {
+        const applications = await Application.find({}).toArray();
+        res.status(200).send(applications);
+      } catch (error) {
+        console.error("Error fetching applications:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
