@@ -27,6 +27,7 @@ async function run() {
     const Events = database.collection("Events");
     const ClassRoutine = database.collection("ClassRoutine");
     const ExamRoutine = database.collection("ExamRoutine");
+    const Application = database.collection("Application");
 
     // info
     const Info = database.collection("Info");
@@ -188,7 +189,8 @@ async function run() {
       }
     });
 
-    // Result Api Nishi
+    // Result Api [Nishi]
+    // update Result of any student in Result.jsx in Teacher dashboard
     app.patch("/result/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { result, teacherSubject } = req.body;
@@ -238,7 +240,8 @@ async function run() {
       }
     });
 
-    // Performance Api Nishi
+    // Performance Api [Nishi]
+    // used for update feedback, mark by teacher.. used in MyStudents.jsx & AssignedStudents.jsx in Teacher Dashboard
     app.patch("/performance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { performanceData, teacherSubject } = req.body;
@@ -284,6 +287,7 @@ async function run() {
     });
 
     // Status update Api
+    // update status of student
     app.patch("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
@@ -335,7 +339,8 @@ async function run() {
       }
     });
 
-    // Delete a student's data
+    // used for delete a student's data from database
+    // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
     app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
@@ -366,7 +371,8 @@ async function run() {
       }
     });
 
-    //For Teachers (used in Home and All-Teacher Route)
+    //get Teachers
+    // (used in Home.jsx and All-Teacher.jsx Route)
     app.get("/teachers", async (req, res) => {
       const { status } = req.query;
 
@@ -384,6 +390,7 @@ async function run() {
     });
 
     // Update teacher status & Schedule
+    // For updating teachers status (accepted/rejected), for set class scheduel.used in Teacher.jsx component of admin dashboard
     app.patch("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const updatedData = req.body;
@@ -417,6 +424,7 @@ async function run() {
     });
 
     // Get teacher by email
+    // used in Result,.jsx page of Teacher Dashboard
     app.get("/teacher/:email", async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
 
@@ -435,6 +443,7 @@ async function run() {
     });
 
     // delete teacher
+    // Admin can accept or delete one teacher.... used in Teacher.jsx component of admin dashboard
     app.delete("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
@@ -648,12 +657,12 @@ async function run() {
     });
 
     // payment api [Nishi]
+    // students pay and add informations here.. fees with studentId... used in FeesManagement.jsx component of Student dashboard.
     app.post("/fees", verifyToken, async (req, res) => {
       const {
         paymentMethod,
         transactionId,
         transactionNumber,
-        paymentDate,
         discount,
         studentId,
       } = req.body;
@@ -664,7 +673,7 @@ async function run() {
           paymentMethod,
           transactionId,
           transactionNumber,
-          paymentDate,
+          paymentDate: new Date(),
           discount,
           studentId,
           status,
@@ -679,6 +688,7 @@ async function run() {
     });
 
     // get all fees [Nishi]
+    // Also used in FeesManagement Page table format.
     app.get("/fees", verifyToken, async (req, res) => {
       try {
         const fees = await Fees.find({}).toArray();
@@ -690,6 +700,7 @@ async function run() {
     });
 
     // update fee status [Nishi]
+    // For Accept the fee Process by admin /teacher. In Finance.jsx component of Admin Dashboard
     app.patch("/fee/:id", verifyToken, async (req, res) => {
       const feeId = req.params.id;
       const { status } = req.body;
@@ -702,6 +713,44 @@ async function run() {
         res.status(200).send({ message: `Fee status updated to ${status}` });
       } catch (error) {
         console.error("Error updating fee status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // [Nishi]
+    // Api for post an Application, used in Application.jsx page of Teacher Dashboard..
+    app.post("/application", verifyToken, async (req, res) => {
+      const { subject, message, teacherId, teacherName } = req.body;
+      const status = "pending";
+
+      try {
+        const newApplication = {
+          subject,
+          message,
+          teacherId,
+          teacherName,
+          status,
+          submittedAt: new Date(),
+        };
+
+        const result = await Application.insertOne(newApplication);
+        res
+          .status(201)
+          .send({ message: "Application submitted successfully", result });
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // [Nishi]
+    // To fetch applications on the ApplicationManagement.jsx page for the admin dashboard, but it's currently being used in the teacher dashboard as well.
+    app.get("/applications", verifyToken, async (req, res) => {
+      try {
+        const applications = await Application.find({}).toArray();
+        res.status(200).send(applications);
+      } catch (error) {
+        console.error("Error fetching applications:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
