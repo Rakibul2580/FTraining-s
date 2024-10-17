@@ -320,7 +320,7 @@ async function run() {
     });
 
     // Get student by email [Nishi for getting student in Fees Management]
-    app.get("/student/:email", async (req, res) => {
+    app.get("/student/:email", verifyToken, async (req, res) => {
       const { email } = req.params;
 
       try {
