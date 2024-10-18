@@ -80,8 +80,6 @@ async function run() {
 
     app.patch("/addFees", verifyToken, async (req, res) => {
       const query = req.body;
-      console.log(query);
-
       try {
         const students = await Students.find({ Class: query.class }).toArray();
         // প্রতিটি শিক্ষার্থীর fees অ্যারেতে নতুন কুইরি পুশ করা
@@ -659,27 +657,10 @@ async function run() {
     // payment api [Nishi]
     // students pay and add informations here.. fees with studentId... used in FeesManagement.jsx component of Student dashboard.
     app.post("/fees", verifyToken, async (req, res) => {
-      const {
-        paymentMethod,
-        transactionId,
-        transactionNumber,
-        discount,
-        studentId,
-      } = req.body;
-      const status = "pending";
+      const query = req.body;
 
       try {
-        const newFee = {
-          paymentMethod,
-          transactionId,
-          transactionNumber,
-          paymentDate: new Date(),
-          discount,
-          studentId,
-          status,
-        };
-
-        const result = await Fees.insertOne(newFee);
+        const result = await Fees.insertOne(query);
         res.status(201).send({ message: "Fee submitted successfully", result });
       } catch (error) {
         console.error("Error submitting fee:", error);
@@ -703,9 +684,20 @@ async function run() {
     // For Accept the fee Process by admin /teacher. In Finance.jsx component of Admin Dashboard
     app.patch("/fee/:id", verifyToken, async (req, res) => {
       const feeId = req.params.id;
-      const { status } = req.body;
+      const { data, status } = req.body;
 
       try {
+        const student = await Students.findOne(
+          (_id = new ObjectId(data.studentId))
+        );
+        const newFees = student.fees.filter(
+          (fee) => fee.amount !== data.amount.toString()
+        );
+        console.log(data.amount);
+        const result = await Students.updateOne(
+          { _id: new ObjectId(data.studentId) },
+          { $set: { fees: newFees } }
+        );
         const updatedFee = await Fees.updateOne(
           { _id: new ObjectId(feeId) },
           { $set: { status: status } }
