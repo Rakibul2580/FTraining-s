@@ -796,6 +796,40 @@ async function run() {
       }
     });
 
+    // PATCH API to update the status of an application, used in ApplicationManagement.jsx page of Admin dashboard.
+    app.patch("/application/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      try {
+        const result = await Application.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status: status } }
+        );
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Application not found" });
+        }
+        res
+          .status(200)
+          .send({ message: `Application status updated to ${status}` });
+      } catch (error) {
+        console.error("Error updating application status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // get applications by teacherId for display that teacher application and used in Application.jsx page pf teacher Dashboard..
+    app.get("/applications/:teacherId", verifyToken, async (req, res) => {
+      const { teacherId } = req.params;
+      try {
+        const applications = await Application.find({ teacherId }).toArray();
+        res.status(200).send(applications);
+      } catch (error) {
+        console.error("Error fetching applications:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`);
     });
