@@ -79,14 +79,13 @@ async function run() {
     });
 
     app.patch("/addFees", verifyToken, async (req, res) => {
-      const query = req.body;
+      const { feesData, formClass } = req.body;
       try {
-        const students = await Students.find({ Class: query.class }).toArray();
-        // প্রতিটি শিক্ষার্থীর fees অ্যারেতে নতুন কুইরি পুশ করা
+        const students = await Students.find({ Class: formClass }).toArray();
         for (const student of students) {
           await Students.updateOne(
             { _id: student._id },
-            { $push: { fees: query } } // fees ফিল্ডে নতুন কুইরি পুশ করা হচ্ছে
+            { $push: { fees: feesData } } // fees ফিল্ডে নতুন কুইরি পুশ করা হচ্ছে
           );
         }
         // for (const student of students) {
@@ -658,8 +657,18 @@ async function run() {
     // students pay and add informations here.. fees with studentId... used in FeesManagement.jsx component of Student dashboard.
     app.post("/fees", verifyToken, async (req, res) => {
       const query = req.body;
-
       try {
+        const student = await Students.findOne(
+          (_id = new ObjectId(query.studentId))
+        );
+        const feeIndex = student.fees.findIndex(
+          (fee) => fee.randomNumber === query.randomNumber
+        );
+        student.fees[feeIndex].status = "Processing";
+        const updateStudent = await Students.updateOne(
+          { _id: new ObjectId(query.studentId) },
+          { $set: { fees: student.fees } }
+        );
         const result = await Fees.insertOne(query);
         res.status(201).send({ message: "Fee submitted successfully", result });
       } catch (error) {
@@ -690,18 +699,58 @@ async function run() {
         const student = await Students.findOne(
           (_id = new ObjectId(data.studentId))
         );
-        const newFees = student.fees.filter(
-          (fee) => fee.amount !== data.amount.toString()
+        const feeIndex = student.fees.findIndex(
+          (fee) => fee.randomNumber === data.randomNumber
         );
-        console.log(data.amount);
-        const result = await Students.updateOne(
-          { _id: new ObjectId(data.studentId) },
-          { $set: { fees: newFees } }
-        );
-        const updatedFee = await Fees.updateOne(
-          { _id: new ObjectId(feeId) },
-          { $set: { status: status } }
-        );
+        // if student amount or student payAmount dose not match
+        if (
+          student.fees[feeIndex].amount !== student.fees[feeIndex].payAmount
+        ) {
+          student.fees[feeIndex].status = "Agin Pending";
+          student.fees[feeIndex].amount =
+            Number(student.fees[feeIndex].amount) -
+            Number(student.fees[feeIndex].payAmount);
+          const result = await Students.updateOne(
+            { _id: new ObjectId(data.studentId) },
+            { $set: { fees: student.fees } }
+          );
+          const feeResult = await Fees.updateOne(
+            { _id: new ObjectId(feeId) },
+            { $set: { status: "Agin Pending" } }
+          );
+          return res.status(200).send({
+            message: "Fee status updated successfully",
+            result,
+            feeResult: result,
+          });
+        }
+
+        if (feeIndex !== -1) {
+          student.fees[feeIndex].status = status;
+          const result = await Students.updateOne(
+            { _id: new ObjectId(data.studentId) },
+            { $set: { fees: student.fees } }
+          );
+          const feeResult = await Fees.updateOne(
+            { _id: new ObjectId(feeId) },
+            { $set: { status: status } }
+          );
+          return res.status(200).send({
+            message: "Fee status updated successfully",
+            result,
+            feeResult: feeResult,
+          });
+        } else {
+          return res.status(404).send({ message: "Fee record not found" });
+        }
+        // const result = await Students.updateOne(
+        //   { _id: new ObjectId(data.studentId) },
+        //   { $set: { fees: newFees } }
+        // );
+        // const updatedFee = await Fees.updateOne(
+        //   { _id: new ObjectId(feeId) },
+        //   { $set: { status: status } }
+        // );
         res.status(200).send({ message: `Fee status updated to ${status}` });
       } catch (error) {
         console.error("Error updating fee status:", error);
