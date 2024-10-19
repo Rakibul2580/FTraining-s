@@ -706,7 +706,7 @@ async function run() {
         if (
           student.fees[feeIndex].amount !== student.fees[feeIndex].payAmount
         ) {
-          student.fees[feeIndex].status = "Agin Pending";
+          student.fees[feeIndex].status = "again Pending";
           student.fees[feeIndex].amount =
             Number(student.fees[feeIndex].amount) -
             Number(student.fees[feeIndex].payAmount);
@@ -716,7 +716,7 @@ async function run() {
           );
           const feeResult = await Fees.updateOne(
             { _id: new ObjectId(feeId) },
-            { $set: { status: "Agin Pending" } }
+            { $set: { status: "again Pending" } }
           );
           return res.status(200).send({
             message: "Fee status updated successfully",
