@@ -321,7 +321,7 @@ async function run() {
     });
 
     // Get student by email [Nishi for getting student in Fees Management]
-    app.get("/student/:email", async (req, res) => {
+    app.get("/student/:email", verifyToken, async (req, res) => {
       const { email } = req.params;
       try {
         const student = await Students.findOne({ Email: email });
@@ -421,7 +421,11 @@ async function run() {
     });
 
     // Get teacher by email
+
+    // used in "/Dashboard/TeacherProfile/MyProfile"
+
     // used in Result,.jsx page of Teacher Dashboard
+
     app.get("/teacher/:email", async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
 
@@ -429,7 +433,38 @@ async function run() {
         const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
 
         if (teacher) {
-          res.send(teacher);
+          res.status(200).send(teacher);
+        } else {
+          res.status(404).send({ message: "Teacher not found" });
+        }
+      } catch (error) {
+        console.error("Error fetching teacher data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // update teacher by email by "Saroar Jahan"
+    // used in "/Dashboard/TeacherProfile/MyProfile"
+    app.patch("/update-teacher/:email", async (req, res) => {
+      const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
+      const formData = req.body;
+
+      try {
+        const data = await Teachers.findOneAndUpdate(
+          { Email: email },
+          {
+            $set: {
+              ...formData,
+              Name: formData?.Name,
+              role: formData?.role,
+              Number: formData?.Number,
+            },
+          },
+          { returnDocument: "after" }
+        );
+
+        if (data) {
+          res.status(200).json({ msg: "success", data });
         } else {
           res.status(404).send({ message: "Teacher not found" });
         }
