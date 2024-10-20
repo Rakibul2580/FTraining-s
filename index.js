@@ -28,6 +28,7 @@ async function run() {
     const ClassRoutine = database.collection("ClassRoutine");
     const ExamRoutine = database.collection("ExamRoutine");
     const Application = database.collection("Application");
+    const Newss = database.collection("News");
 
     // info
     const Info = database.collection("Info");
@@ -862,6 +863,70 @@ async function run() {
       } catch (error) {
         console.error("Error fetching applications:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // create new news (Saroar)
+    // used in "Dashboard/Others" route
+    app.post("/create-news", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Newss.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a news (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-news/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Newss.findOneAndDelete({ _id: new ObjectId(id) });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all news by this user new news (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-news/:email", async (req, res) => {
+      const { email } = req.params;
+
+      try {
+        const data = await Newss.find({
+          createdBy: email,
+        })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
       }
     });
 
