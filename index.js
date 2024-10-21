@@ -325,16 +325,26 @@ async function run() {
       const { email } = req.params;
       try {
         const student = await Students.findOne({ Email: email });
-        if (student) {
-          res.send(student);
-        } else {
-          res.status(404).send({ message: "Student not found" });
-        }
+        res.status(200).send(student);
       } catch (error) {
         console.error("Error retrieving student:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+    // app.get("/student/:email", verifyToken, async (req, res) => {
+    //   const { email } = req.params;
+    //   try {
+    //     const student = await Students.findOne({ Email: email });
+    //     if (student) {
+    //       res.send(student);
+    //     } else {
+    //       res.status(404).send({ message: "Student not found" });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error retrieving student:", error);
+    //     res.status(500).send({ message: "Internal Server Error" });
+    //   }
+    // });
 
     // used for delete a student's data from database
     // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
@@ -421,9 +431,7 @@ async function run() {
     });
 
     // Get teacher by email
-
     // used in "/Dashboard/TeacherProfile/MyProfile"
-
     // used in Result,.jsx page of Teacher Dashboard
 
     app.get("/teacher/:email", async (req, res) => {
