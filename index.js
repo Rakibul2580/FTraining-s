@@ -29,6 +29,7 @@ async function run() {
     const ExamRoutine = database.collection("ExamRoutine");
     const Application = database.collection("Application");
     const Newss = database.collection("News");
+    const ParentTestimonials = database.collection("ParentsTestimonial");
 
     // info
     const Info = database.collection("Info");
@@ -926,6 +927,48 @@ async function run() {
       } catch (error) {
         console.log("error", error);
 
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new parents testimonial (Saroar)
+    // used in "/Dashboard/Student/My-Profile"
+    app.post("/parent-testimonial/create", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await ParentTestimonials.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+            createdAt: new Date(),
+          },
+        });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all parents testimonial (Saroar)
+    // used in "/Dashboard/Student/My-Profile"
+    app.get("/parent-testimonials", async (req, res) => {
+      const { email } = req.query;
+
+      try {
+        const data = await ParentTestimonials.find({
+          createdBy: email,
+        })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
         res.status(500).json({ msg: "error", error });
       }
     });
