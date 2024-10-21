@@ -23,6 +23,7 @@ async function run() {
     const Students = database.collection("Students");
     const Teachers = database.collection("Teachers");
     const Fees = database.collection("Fees");
+    const AllFees = database.collection("AllFees");
     const Notices = database.collection("Notices");
     const Events = database.collection("Events");
     const ClassRoutine = database.collection("ClassRoutine");
@@ -83,13 +84,20 @@ async function run() {
     app.patch("/addFees", verifyToken, async (req, res) => {
       const { feesData, formClass } = req.body;
       try {
+        feesData.status = "Pending";
         const students = await Students.find({ Class: formClass }).toArray();
         for (const student of students) {
           await Students.updateOne(
             { _id: student._id },
-            { $push: { fees: feesData } } // fees ফিল্ডে নতুন কুইরি পুশ করা হচ্ছে
+            { $push: { fees: feesData } }
           );
         }
+
+        delete feesData.status;
+        feesData.date = new Date().toISOString().slice(0, 10);
+        feesData.class = formClass;
+        await AllFees.insertOne(feesData);
+
         // for (const student of students) {
         //   await Students.updateOne(
         //     { _id: student._id },
@@ -111,6 +119,20 @@ async function run() {
       } catch (error) {
         console.error("Error updating attendance:", error.message);
         res.status(500).send({ message: "Server error" });
+      }
+    });
+
+    app.get("/allFees", verifyToken, async (req, res) => {
+      try {
+        const fees = await AllFees.find({}).toArray();
+
+        res.status(200).send({
+          message: "Fees fetched successfully!",
+          fees,
+        });
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        res.status(500).send({ message: "Internal Server Error" });
       }
     });
 
@@ -323,7 +345,7 @@ async function run() {
     });
 
     // Get student by email [Nishi for getting student in Fees Management]
-    app.get("/student/:email", verifyToken, async (req, res) => {
+    app.get("/student/:email", async (req, res) => {
       const { email } = req.params;
       try {
         const student = await Students.findOne({ Email: email });
@@ -423,11 +445,7 @@ async function run() {
     });
 
     // Get teacher by email
-
-    // used in "/Dashboard/TeacherProfile/MyProfile"
-
     // used in Result,.jsx page of Teacher Dashboard
-
     app.get("/teacher/:email", async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
 
@@ -435,38 +453,7 @@ async function run() {
         const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
 
         if (teacher) {
-          res.status(200).send(teacher);
-        } else {
-          res.status(404).send({ message: "Teacher not found" });
-        }
-      } catch (error) {
-        console.error("Error fetching teacher data:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
-
-    // update teacher by email by "Saroar Jahan"
-    // used in "/Dashboard/TeacherProfile/MyProfile"
-    app.patch("/update-teacher/:email", async (req, res) => {
-      const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
-      const formData = req.body;
-
-      try {
-        const data = await Teachers.findOneAndUpdate(
-          { Email: email },
-          {
-            $set: {
-              ...formData,
-              Name: formData?.Name,
-              role: formData?.role,
-              Number: formData?.Number,
-            },
-          },
-          { returnDocument: "after" }
-        );
-
-        if (data) {
-          res.status(200).json({ msg: "success", data });
+          res.send(teacher);
         } else {
           res.status(404).send({ message: "Teacher not found" });
         }
