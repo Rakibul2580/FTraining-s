@@ -276,7 +276,6 @@ async function run() {
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
         // for first time performance add[remove this]
-        console.log(student);
         if (!student.performance) {
           student.performance = {};
         }
@@ -355,19 +354,30 @@ async function run() {
       const { email } = req.params;
       try {
         const student = await Students.findOne({ Email: email });
-        if (student) {
-          res.send(student);
-        } else {
-          res.status(404).send({ message: "Student not found" });
-        }
+        res.status(200).send(student);
       } catch (error) {
         console.error("Error retrieving student:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+    // app.get("/student/:email", verifyToken, async (req, res) => {
+    //   const { email } = req.params;
+    //   try {
+    //     const student = await Students.findOne({ Email: email });
+    //     if (student) {
+    //       res.send(student);
+    //     } else {
+    //       res.status(404).send({ message: "Student not found" });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error retrieving student:", error);
+    //     res.status(500).send({ message: "Internal Server Error" });
+    //   }
+    // });
 
     // used for delete a student's data from database
     // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
+
     app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
@@ -451,10 +461,10 @@ async function run() {
     });
 
     // Get teacher by email
-    // used in Result,.jsx page of Teacher Dashboard
-    app.get("/teacher/:email", async (req, res) => {
+    // used in "/Dashboard/TeacherProfile/MyProfile"
+    // used in Result.jsx page of Teacher Dashboard , MyStudents.jsx, AssignedStudents.jsx
+    app.get("/teacher/:email", verifyToken, async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
-
       try {
         const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
 
@@ -528,7 +538,6 @@ async function run() {
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
       const { type, title, details } = req.body;
-      console.log(req.body);
       if (!type || !title || !details) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
