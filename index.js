@@ -31,6 +31,8 @@ async function run() {
     const Application = database.collection("Application");
     const Newss = database.collection("News");
     const ParentTestimonials = database.collection("ParentsTestimonial");
+    const Achievements = database.collection("Achievement");
+    const Gallery = database.collection("Gallery");
 
     // info
     const Info = database.collection("Info");
@@ -956,6 +958,126 @@ async function run() {
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new achievements (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-achievements", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Achievements.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a achievement (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-achievements/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Achievements.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all news by this user new news (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-achievements", async (req, res) => {
+      try {
+        const data = await Achievements.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new gallery (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-gallery", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Gallery.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a gallery (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-gallery/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Gallery.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all gallery (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-gallery", async (req, res) => {
+      try {
+        const data = await Gallery.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
         res.status(500).json({ msg: "error", error });
       }
     });
