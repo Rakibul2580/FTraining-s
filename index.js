@@ -276,7 +276,6 @@ async function run() {
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
         // for first time performance add[remove this]
-        console.log(student);
         if (!student.performance) {
           student.performance = {};
         }
@@ -466,7 +465,6 @@ async function run() {
     // used in Result.jsx page of Teacher Dashboard , MyStudents.jsx, AssignedStudents.jsx
     app.get("/teacher/:email", verifyToken, async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
-
       try {
         const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
 
@@ -540,7 +538,6 @@ async function run() {
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
       const { type, title, details } = req.body;
-      console.log(req.body);
       if (!type || !title || !details) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
