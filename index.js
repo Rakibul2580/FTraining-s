@@ -370,6 +370,7 @@ async function run() {
 
     // used for delete a student's data from database
     // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
+
     app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
@@ -454,8 +455,8 @@ async function run() {
 
     // Get teacher by email
     // used in "/Dashboard/TeacherProfile/MyProfile"
-    // used in Result,.jsx page of Teacher Dashboard
-    app.get("/teacher/:email", async (req, res) => {
+    // used in Result.jsx page of Teacher Dashboard , MyStudents.jsx, AssignedStudents.jsx
+    app.get("/teacher/:email", verifyToken, async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
 
       try {
@@ -823,6 +824,19 @@ async function run() {
       try {
         const applications = await Application.find({}).toArray();
         res.status(200).send(applications);
+      } catch (error) {
+        console.error("Error fetching applications:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.get("/application/:teacherId", verifyToken, async (req, res) => {
+      const { teacherId } = req.params;
+      console.log(teacherId);
+
+      try {
+        const application = await Application.findOne({ teacherId: teacherId });
+        res.status(200).send(application);
       } catch (error) {
         console.error("Error fetching applications:", error);
         res.status(500).send({ message: "Internal Server Error" });
