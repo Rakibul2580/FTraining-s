@@ -29,6 +29,14 @@ async function run() {
     const ClassRoutine = database.collection("ClassRoutine");
     const ExamRoutine = database.collection("ExamRoutine");
     const Application = database.collection("Application");
+    const Newss = database.collection("News");
+    const ParentTestimonials = database.collection("ParentsTestimonial");
+    const Achievements = database.collection("Achievement");
+    const Gallery = database.collection("Gallery");
+    const Syllabus = database.collection("Syllabus");
+    const Sheets = database.collection("Sheet");
+    const AcademicRules = database.collection("AcademicRule");
+    const ExamSystem = database.collection("ExamSystem");
 
     // info
     const Info = database.collection("Info");
@@ -815,6 +823,474 @@ async function run() {
       } catch (error) {
         console.error("Error fetching applications:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // PATCH API to update the status of an application, used in ApplicationManagement.jsx page of Admin dashboard.
+    app.patch("/application/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      try {
+        const result = await Application.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status: status } }
+        );
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Application not found" });
+        }
+        res
+          .status(200)
+          .send({ message: `Application status updated to ${status}` });
+      } catch (error) {
+        console.error("Error updating application status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // get applications by teacherId for display that teacher application and used in Application.jsx page pf teacher Dashboard..
+    app.get("/applications/:teacherId", verifyToken, async (req, res) => {
+      const { teacherId } = req.params;
+      try {
+        const applications = await Application.find({ teacherId }).toArray();
+        res.status(200).send(applications);
+      } catch (error) {
+        console.error("Error fetching applications:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // create new news (Saroar)
+    // used in "Dashboard/Others" route
+    app.post("/create-news", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Newss.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a news (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-news/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Newss.findOneAndDelete({ _id: new ObjectId(id) });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all news by this user new news (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-news/:email", async (req, res) => {
+      const { email } = req.params;
+
+      try {
+        const data = await Newss.find({
+          createdBy: email,
+        })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new parents testimonial (Saroar)
+    // used in "/Dashboard/Student/My-Profile"
+    app.post("/parent-testimonial/create", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await ParentTestimonials.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+            createdAt: new Date(),
+          },
+        });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all parents testimonial (Saroar)
+    // used in "/Dashboard/Student/My-Profile"
+    app.get("/parent-testimonials", async (req, res) => {
+      const { email } = req.query;
+
+      try {
+        const data = await ParentTestimonials.find({
+          createdBy: email,
+        })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new achievements (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-achievements", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Achievements.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a achievement (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-achievements/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Achievements.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all news by this user new news (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-achievements", async (req, res) => {
+      try {
+        const data = await Achievements.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new gallery (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-gallery", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Gallery.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a gallery (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-gallery/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Gallery.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all gallery (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-gallery", async (req, res) => {
+      try {
+        const data = await Gallery.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new Syllabus (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-syllabus", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Syllabus.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a Syllabus (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-syllabus/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Syllabus.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all Syllabus (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-syllabus", async (req, res) => {
+      try {
+        const data = await Syllabus.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new sheet (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-sheet", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Sheets.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a Syllabus (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-sheet/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Sheets.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all Syllabus (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-sheet", async (req, res) => {
+      try {
+        const data = await Sheets.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.post("/update-rules", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        const existingData = await AcademicRules.find({}).toArray();
+        if (existingData.length < 1) {
+          const newData = await AcademicRules.insertOne(formData);
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+
+        if (existingData.length > 0) {
+          const newData = await AcademicRules.updateOne(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                rules: formData.rules,
+              },
+            }
+          );
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-rules", async (req, res) => {
+      try {
+        const data = await AcademicRules.find({}).toArray();
+
+        return res.status(200).json({ msg: "success", data: data[0] });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.post("/update-exam-rules", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        const existingData = await ExamSystem.find({}).toArray();
+        if (existingData.length < 1) {
+          const newData = await ExamSystem.insertOne(formData);
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+
+        if (existingData.length > 0) {
+          const newData = await ExamSystem.updateOne(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                rules: formData.rules,
+              },
+            }
+          );
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-exam-rules", async (req, res) => {
+      try {
+        const data = await ExamSystem.find({}).toArray();
+
+        return res.status(200).json({ msg: "success", data: data[0] });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
       }
     });
 
