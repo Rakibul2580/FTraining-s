@@ -34,6 +34,7 @@ async function run() {
     const Achievements = database.collection("Achievement");
     const Gallery = database.collection("Gallery");
     const Syllabus = database.collection("Syllabus");
+    const Sheets = database.collection("Sheet");
 
     // info
     const Info = database.collection("Info");
@@ -1134,6 +1135,66 @@ async function run() {
     app.get("/get-syllabus", async (req, res) => {
       try {
         const data = await Syllabus.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create new sheet (Saroar)
+    // used in "/Dashboard/Others" route
+    app.post("/create-sheet", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Sheets.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data: {
+            _id: data.insertedId,
+            ...formdata,
+          },
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delete a Syllabus (Saroar)
+    // used in "Dashboard/Others" route
+    app.delete("/delete-sheet/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Sheets.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
+      } catch (error) {
+        console.log("error", error);
+
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all Syllabus (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-sheet", async (req, res) => {
+      try {
+        const data = await Sheets.find({}).sort({ _id: -1 }).toArray();
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
