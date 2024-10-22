@@ -35,6 +35,8 @@ async function run() {
     const Gallery = database.collection("Gallery");
     const Syllabus = database.collection("Syllabus");
     const Sheets = database.collection("Sheet");
+    const AcademicRules = database.collection("AcademicRule");
+    const ExamSystem = database.collection("ExamSystem");
 
     // info
     const Info = database.collection("Info");
@@ -1200,6 +1202,94 @@ async function run() {
       } catch (error) {
         console.log("error", error);
 
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.post("/update-rules", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        const existingData = await AcademicRules.find({}).toArray();
+        if (existingData.length < 1) {
+          const newData = await AcademicRules.insertOne(formData);
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+
+        if (existingData.length > 0) {
+          const newData = await AcademicRules.updateOne(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                rules: formData.rules,
+              },
+            }
+          );
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-rules", async (req, res) => {
+      try {
+        const data = await AcademicRules.find({}).toArray();
+
+        return res.status(200).json({ msg: "success", data: data[0] });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.post("/update-exam-rules", async (req, res) => {
+      const formData = req.body;
+
+      try {
+        const existingData = await ExamSystem.find({}).toArray();
+        if (existingData.length < 1) {
+          const newData = await ExamSystem.insertOne(formData);
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+
+        if (existingData.length > 0) {
+          const newData = await ExamSystem.updateOne(
+            { _id: existingData[0]._id },
+            {
+              $set: {
+                rules: formData.rules,
+              },
+            }
+          );
+
+          return res.status(200).json({ msg: "success", data: newData });
+        }
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // update academic rules (Saroar)
+    // used in "Dashboard/Others" route
+    app.get("/get-exam-rules", async (req, res) => {
+      try {
+        const data = await ExamSystem.find({}).toArray();
+
+        return res.status(200).json({ msg: "success", data: data[0] });
+      } catch (error) {
+        console.log("error", error);
         res.status(500).json({ msg: "error", error });
       }
     });
