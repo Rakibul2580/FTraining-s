@@ -360,20 +360,6 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
-    // app.get("/student/:email", verifyToken, async (req, res) => {
-    //   const { email } = req.params;
-    //   try {
-    //     const student = await Students.findOne({ Email: email });
-    //     if (student) {
-    //       res.send(student);
-    //     } else {
-    //       res.status(404).send({ message: "Student not found" });
-    //     }
-    //   } catch (error) {
-    //     console.error("Error retrieving student:", error);
-    //     res.status(500).send({ message: "Internal Server Error" });
-    //   }
-    // });
 
     // used for delete a student's data from database
     // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
@@ -561,7 +547,7 @@ async function run() {
     // get all notice
     app.get("/notices", async (req, res) => {
       try {
-        const data = await Notices.find({}).toArray();
+        const data = await Notices.find({}).sort({ _id: -1 }).toArray();
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
@@ -963,9 +949,9 @@ async function run() {
       const { email } = req.query;
 
       try {
-        const data = await ParentTestimonials.find({
-          createdBy: email,
-        })
+        const data = await ParentTestimonials.find(
+          email ? { createdBy: email } : {}
+        )
           .sort({ _id: -1 })
           .toArray();
 
@@ -1090,7 +1076,6 @@ async function run() {
         res.status(200).json({ msg: "success", data });
       } catch (error) {
         console.log("error", error);
-
         res.status(500).json({ msg: "error", error });
       }
     });
