@@ -949,9 +949,9 @@ async function run() {
       const { email } = req.query;
 
       try {
-        const data = await ParentTestimonials.find({
-          createdBy: email,
-        })
+        const data = await ParentTestimonials.find(
+          email ? { createdBy: email } : {}
+        )
           .sort({ _id: -1 })
           .toArray();
 
