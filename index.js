@@ -383,6 +383,7 @@ async function run() {
     // Get student class for the teacher Rakibul
     app.get("/students/:class", verifyToken, async (req, res) => {
       const classInfo = req.params.class;
+      console.log("check");
 
       try {
         let query = { Class: classInfo }; // Matching field name with your database field (Class)
@@ -576,7 +577,8 @@ async function run() {
       }
     });
 
-    // get events
+    // get events created by saroar
+    // user in "Dashboard/Others" and 'homepage', dont protect it, its public
     app.get("/events", async (req, res) => {
       try {
         const data = await Events.find({}).toArray();
@@ -913,8 +915,18 @@ async function run() {
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
-        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
 
+    // get all news (Saroar)
+    // used in "homepage" route. NB: dont protect this route, its public
+    app.get("/get-news", async (req, res) => {
+      try {
+        const data = await Newss.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
         res.status(500).json({ msg: "error", error });
       }
     });
