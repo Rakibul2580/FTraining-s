@@ -363,7 +363,6 @@ async function run() {
 
     // used for delete a student's data from database
     // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
-
     app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
@@ -383,7 +382,6 @@ async function run() {
     // Get student class for the teacher Rakibul
     app.get("/students/:class", verifyToken, async (req, res) => {
       const classInfo = req.params.class;
-      console.log("check");
 
       try {
         let query = { Class: classInfo }; // Matching field name with your database field (Class)
@@ -392,6 +390,108 @@ async function run() {
       } catch (error) {
         console.error("Error fetching students:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // push a result to the student model (Saroar)
+    // used in "Dashboard/Result"
+    app.patch("/student/new-result/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      const formdata = req.body;
+
+      try {
+        const data = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $push: {
+              results: {
+                title: formdata.title,
+                result: formdata.result,
+                subject: formdata.subject,
+              },
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
+    // push a result to the student model (Saroar)
+    // used in "Dashboard/Result"
+    app.patch("/student/new-result/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      const formdata = req.body;
+
+      try {
+        const data = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $push: {
+              results: {
+                title: formdata.title,
+                result: formdata.result,
+                subject: formdata.subject,
+              },
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
+    // update homework to all student (Saroar)
+    // used in "dashboard/AssignedStudents"
+    app.post("/student/assign-homework", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Students.updateMany(
+          { Class: String(formdata.selectedClass) },
+          {
+            $set: {
+              [`homeworks.${formdata.subject}`]: formdata.homeWork,
+            },
+          },
+          { returnDocument: "after" }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
+    // get previous homework (Saroar)
+    // used in "dashboard/AssignedStudents"
+    app.get("/student/get-homework/:subject/:Class", async (req, res) => {
+      const { subject, Class } = req.params;
+
+      try {
+        const data = await Students.find(
+          {
+            Class: String(Class),
+            [`homeworks.${subject}`]: { $exists: true },
+          },
+          { [`homeworks.${subject}`]: 1, _id: 0 }
+        ).toArray();
+
+        const homeworkNames = data.map((student) => student.homeworks[subject]);
+
+        res.status(200).json({ msg: "success", data: homeworkNames[0] });
+      } catch (error) {
+        console.error("Error fetching student homework:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
       }
     });
 
