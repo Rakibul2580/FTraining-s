@@ -70,13 +70,13 @@ async function run() {
     app.get("/", async (req, res) => {
       try {
         // সকল শিক্ষার্থীর ডেটা বের করা
-        const students = await Students.find({}).toArray();
+        const students = await Teachers.find({}).toArray();
 
         // প্রতিটি শিক্ষার্থীর ডেটাতে নতুন fees ফিল্ড যোগ করা
         // for (const student of students) {
-        //   await Students.updateOne(
+        //   await Teachers.updateOne(
         //     { _id: student._id },
-        //     { $set: { fees: [] } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
+        //     { $set: { mySpeech: "Hello" } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
         //   );
         // }
 
@@ -349,6 +349,63 @@ async function run() {
       }
     });
 
+    app.patch("/student/discount/:id", async (req, res) => {
+      const data = req.body;
+
+      try {
+        const student = await Students.findOne({ _id: new ObjectId(data.id) });
+        if (!student) {
+          return res.status(404).send({ message: "Student Id is Incorrect" });
+        }
+        if (data.type === "Temporary") {
+          const feeData = student.fees.find(
+            (fee) => fee.randomNumber === data.randomNumber
+          );
+          if (!feeData) {
+            return res
+              .status(404)
+              .send({ message: "Random Number is Incorrect" });
+          }
+
+          feeData.amount = feeData.amount - data.amount;
+          feeData.discount = data.amount;
+
+          const result = await Students.updateOne(
+            {
+              _id: new ObjectId(data.id),
+              "fees.randomNumber": data.randomNumber,
+            },
+            {
+              $set: {
+                "fees.$.amount": feeData.amount,
+                "fees.$.discount": feeData.discount,
+              },
+            }
+          );
+          res.send({
+            message: "Discount applied successfully",
+            updatedFee: result,
+          });
+        } else {
+          const result = await Students.updateOne(
+            { _id: new ObjectId(data.id) },
+            {
+              $set: {
+                discount: data.amount,
+              },
+            }
+          );
+          res.send({
+            message: "Permanent Discount applied successfully",
+            updatedFee: result,
+          });
+        }
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+
     // Get student by email [Nishi for getting student in Fees Management]
     app.get("/student/:email", async (req, res) => {
       const { email } = req.params;
@@ -397,13 +454,9 @@ async function run() {
     //get Teachers
     // (used in Home.jsx and All-Teacher.jsx Route)
     app.get("/teachers", async (req, res) => {
-      const { status } = req.query;
-
       try {
         let query = {};
-        if (status) {
-          query = { status: status };
-        }
+        query = { status: "accepted" };
         const teachers = await Teachers.find(query).toArray();
         res.send(teachers);
       } catch (error) {
