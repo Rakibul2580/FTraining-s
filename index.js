@@ -313,11 +313,10 @@ async function run() {
     });
 
     // Status update Api
-    // update status of student
+    // update status of student and set classRoll used in MyStudent page of teacher dashboard
     app.patch("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const { status } = req.body;
-
+      const { status, classRoll } = req.body;
       try {
         const student = await Students.findOne({ _id: new ObjectId(id) });
 
@@ -327,7 +326,9 @@ async function run() {
         if (status) {
           updateFields.$set.status = status;
         }
-
+        if (classRoll) {
+          updateFields.$set.classRoll = classRoll;
+        }
         const resultUpdate = await Students.updateOne(
           { _id: new ObjectId(id) },
           updateFields
@@ -411,7 +412,6 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
-
     // Update teacher status & Schedule
     // For updating teachers status (accepted/rejected), for set class scheduel.used in Teacher.jsx component of admin dashboard
     app.patch("/teacher/:id", verifyToken, async (req, res) => {
