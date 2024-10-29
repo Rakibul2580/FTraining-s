@@ -554,11 +554,22 @@ async function run() {
 
     //get Teachers
     // (used in Home.jsx and All-Teacher.jsx Route)
-    app.get("/teachers", async (req, res) => {
+    app.get("/teachers", verifyToken, async (req, res) => {
       try {
         let query = {};
-        query = { status: "accepted" };
         const teachers = await Teachers.find(query).toArray();
+        res.send(teachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+    app.get("/home/teachers", async (req, res) => {
+      try {
+        let query = {};
+        const teachers = await Teachers.find(query, {
+          projection: { Name: 1, img: 1, classSchedule: 1, role: 1 },
+        }).toArray();
         res.send(teachers);
       } catch (error) {
         console.error("Error fetching teachers:", error);
