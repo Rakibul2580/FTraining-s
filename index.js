@@ -279,7 +279,6 @@ async function run() {
         if (!student.performance) {
           student.performance = {};
         }
-
         if (!student.performance[teacherSubject]) {
           student.performance[teacherSubject] = [];
         }
@@ -677,8 +676,8 @@ async function run() {
 
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
-      const { type, title, details } = req.body;
-      if (!type || !title || !details) {
+      const { type, title, details, createdBy } = req.body;
+      if (!type || !title || !details || !createdBy) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
 
@@ -688,6 +687,7 @@ async function run() {
           type,
           title,
           details,
+          createdBy,
           createdAt: new Date(),
         });
 
@@ -709,11 +709,46 @@ async function run() {
       }
     });
 
+    // get notices by email, used in Notices page for displaying all notices published by any teacher.
+    app.get("/notices/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
+
+      try {
+        const data = await Notices.find({ createdBy: email })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+    // For delete one notice. used in Notice page
+    app.delete("/notice/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Notices.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res
+            .status(404)
+            .json({ msg: "failed", error: "Notice not found" });
+        }
+
+        res.status(200).json({ msg: "success", data: { id } });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
     // create event
     app.post("/events/create", async (req, res) => {
-      const { date, time, title, details, image } = req.body;
+      const { date, time, title, details, image, createdBy } = req.body;
 
-      if (!date || !time || !title || !details || !image) {
+      if (!date || !time || !title || !details || !image || !createdBy) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
 
@@ -738,6 +773,42 @@ async function run() {
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get events by email, used in Events page for displaying all events published by any teacher.
+    app.get("/events/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
+
+      try {
+        const data = await Events.find({ createdBy: email })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // For delete one event. used in Event page
+    app.delete("/event/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Events.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res
+            .status(404)
+            .json({ msg: "failed", error: "Notice not found" });
+        }
+
+        res.status(200).json({ msg: "success", data: { id } });
+      } catch (error) {
+        console.log("error", error);
         res.status(500).json({ msg: "failed", error });
       }
     });
