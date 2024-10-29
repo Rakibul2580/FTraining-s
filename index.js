@@ -279,7 +279,6 @@ async function run() {
         if (!student.performance) {
           student.performance = {};
         }
-
         if (!student.performance[teacherSubject]) {
           student.performance[teacherSubject] = [];
         }
@@ -523,8 +522,8 @@ async function run() {
 
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
-      const { type, title, details } = req.body;
-      if (!type || !title || !details) {
+      const { type, title, details, createdBy } = req.body;
+      if (!type || !title || !details || !createdBy) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
 
@@ -534,6 +533,7 @@ async function run() {
           type,
           title,
           details,
+          createdBy,
           createdAt: new Date(),
         });
 
@@ -551,6 +551,22 @@ async function run() {
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get notices by email
+    app.get("/notices/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
+
+      try {
+        const data = await Notices.find({ createdBy: email })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
         res.status(500).json({ msg: "failed", error });
       }
     });
