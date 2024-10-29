@@ -363,7 +363,6 @@ async function run() {
 
     // used for delete a student's data from database
     // For accept and Reject one student. Used in Student.jsx of admin dashboard & MyStudents.jsx in Teacher Dashboard.
-
     app.delete("/student/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
@@ -391,6 +390,108 @@ async function run() {
       } catch (error) {
         console.error("Error fetching students:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // push a result to the student model (Saroar)
+    // used in "Dashboard/Result"
+    app.patch("/student/new-result/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      const formdata = req.body;
+
+      try {
+        const data = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $push: {
+              results: {
+                title: formdata.title,
+                result: formdata.result,
+                subject: formdata.subject,
+              },
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
+    // push a result to the student model (Saroar)
+    // used in "Dashboard/Result"
+    app.patch("/student/new-result/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      const formdata = req.body;
+
+      try {
+        const data = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $push: {
+              results: {
+                title: formdata.title,
+                result: formdata.result,
+                subject: formdata.subject,
+              },
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
+    // update homework to all student (Saroar)
+    // used in "dashboard/AssignedStudents"
+    app.post("/student/assign-homework", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Students.updateMany(
+          { Class: String(formdata.selectedClass) },
+          {
+            $set: {
+              [`homeworks.${formdata.subject}`]: formdata.homeWork,
+            },
+          },
+          { returnDocument: "after" }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error updating student:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
+    // get previous homework (Saroar)
+    // used in "dashboard/AssignedStudents"
+    app.get("/student/get-homework/:subject/:Class", async (req, res) => {
+      const { subject, Class } = req.params;
+
+      try {
+        const data = await Students.find(
+          {
+            Class: String(Class),
+            [`homeworks.${subject}`]: { $exists: true },
+          },
+          { [`homeworks.${subject}`]: 1, _id: 0 }
+        ).toArray();
+
+        const homeworkNames = data.map((student) => student.homeworks[subject]);
+
+        res.status(200).json({ msg: "success", data: homeworkNames[0] });
+      } catch (error) {
+        console.error("Error fetching student homework:", error);
+        res.status(500).json({ message: "Internal Server Error", error });
       }
     });
 
@@ -592,7 +693,8 @@ async function run() {
       }
     });
 
-    // get events
+    // get events created by saroar
+    // user in "Dashboard/Others" and 'homepage', dont protect it, its public
     app.get("/events", async (req, res) => {
       try {
         const data = await Events.find({}).toArray();
@@ -929,8 +1031,18 @@ async function run() {
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
-        console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
 
+    // get all news (Saroar)
+    // used in "homepage" route. NB: dont protect this route, its public
+    app.get("/get-news", async (req, res) => {
+      try {
+        const data = await Newss.find({}).sort({ _id: -1 }).toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
         res.status(500).json({ msg: "error", error });
       }
     });
