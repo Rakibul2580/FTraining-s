@@ -656,7 +656,7 @@ async function run() {
       }
     });
 
-    // get notices by email
+    // get notices by email, used in Notices page for displaying all notices published by any teacher.
     app.get("/notices/:email", verifyToken, async (req, res) => {
       const { email } = req.params;
 
@@ -674,9 +674,9 @@ async function run() {
 
     // create event
     app.post("/events/create", async (req, res) => {
-      const { date, time, title, details, image } = req.body;
+      const { date, time, title, details, image, createdBy } = req.body;
 
-      if (!date || !time || !title || !details || !image) {
+      if (!date || !time || !title || !details || !image || !createdBy) {
         return res.status(406).json({ msg: "failed", msg: "missing fields" });
       }
 
@@ -701,6 +701,22 @@ async function run() {
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // get events by email, used in Events page for displaying all events published by any teacher.
+    app.get("/events/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
+
+      try {
+        const data = await Events.find({ createdBy: email })
+          .sort({ _id: -1 })
+          .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
         res.status(500).json({ msg: "failed", error });
       }
     });
