@@ -671,6 +671,25 @@ async function run() {
         res.status(500).json({ msg: "failed", error });
       }
     });
+    // For delete one notice. used in Notice page
+    app.delete("/notice/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Notices.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res
+            .status(404)
+            .json({ msg: "failed", error: "Notice not found" });
+        }
+
+        res.status(200).json({ msg: "success", data: { id } });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
 
     // create event
     app.post("/events/create", async (req, res) => {
@@ -715,6 +734,26 @@ async function run() {
           .toArray();
 
         res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // For delete one event. used in Event page
+    app.delete("/event/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Events.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res
+            .status(404)
+            .json({ msg: "failed", error: "Notice not found" });
+        }
+
+        res.status(200).json({ msg: "success", data: { id } });
       } catch (error) {
         console.log("error", error);
         res.status(500).json({ msg: "failed", error });
