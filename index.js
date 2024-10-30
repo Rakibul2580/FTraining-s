@@ -267,30 +267,19 @@ async function run() {
       }
     });
 
-    // Performance Api [Nishi]
-    // used for update feedback, mark by teacher.. used in MyStudents.jsx & AssignedStudents.jsx in Teacher Dashboard
+    // Performance Api
+    // used for update feedback, mark. used in MyStudents.jsx & AssignedStudents.jsx in Teacher Dashboard
     app.patch("/performance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const { performanceData, teacherSubject } = req.body;
+      const { performance } = req.body;
 
       try {
+        // Ensure the student exists
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        // for first time performance add[remove this]
-        if (!student.performance) {
-          student.performance = {};
-        }
-        if (!student.performance[teacherSubject]) {
-          student.performance[teacherSubject] = [];
-        }
 
-        student.performance[teacherSubject].push({
-          feedback: performanceData.feedback,
-          mark: performanceData.mark,
-          date: new Date(),
-        });
         const performanceUpdate = await Students.updateOne(
           { _id: new ObjectId(id) },
-          { $set: { performance: student.performance } }
+          { $set: { performance: performance } }
         );
 
         if (performanceUpdate.modifiedCount === 0) {
@@ -300,11 +289,7 @@ async function run() {
         const updatedStudent = await Students.findOne({
           _id: new ObjectId(id),
         });
-        const responsePerformance = {
-          [teacherSubject]: updatedStudent.performance[teacherSubject],
-        };
-
-        res.send(responsePerformance);
+        res.send(updatedStudent.performance);
       } catch (error) {
         console.error("Error updating performance:", error);
         res.status(500).send({ message: "Internal Server Error", error });
