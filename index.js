@@ -491,6 +491,25 @@ async function run() {
       }
     });
 
+    // update student profile by email
+    app.patch("/update-student/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
+      const formdata = req.body;
+
+      try {
+        const result = await Students.findOneAndUpdate(
+          { Email: email },
+          { $set: formdata },
+          { returnDocument: "after" }
+        );
+
+        res.status(200).json({ msg: "success", data: result });
+      } catch (error) {
+        console.error("Error updating student data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
     // update homework to all student (Saroar)
     // used in "dashboard/AssignedStudents"
     app.post("/student/assign-homework", async (req, res) => {
@@ -549,6 +568,7 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     app.get("/home/teachers", async (req, res) => {
       try {
         let query = {};
@@ -603,6 +623,25 @@ async function run() {
         } else {
           res.status(404).send({ message: "Teacher not found" });
         }
+      } catch (error) {
+        console.error("Error updating teacher data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // Update teacher by email
+    app.patch("/update-teacher/:email", verifyToken, async (req, res) => {
+      const { email } = req.params;
+      const formdata = req.body;
+
+      try {
+        const result = await Teachers.findOneAndUpdate(
+          { Email: email },
+          { $set: formdata },
+          { returnDocument: "after" }
+        );
+
+        res.status(200).json({ msg: "success", data: result });
       } catch (error) {
         console.error("Error updating teacher data:", error);
         res.status(500).send({ message: "Internal Server Error" });
