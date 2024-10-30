@@ -598,7 +598,7 @@ async function run() {
     // Get teacher by email
     // used in "/Dashboard/TeacherProfile/MyProfile"
     // used in Result.jsx page of Teacher Dashboard , MyStudents.jsx, AssignedStudents.jsx
-    app.get("/teacher/:email", verifyToken, async (req, res) => {
+    app.get("/teacher/:email", async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
       try {
         const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
@@ -614,8 +614,27 @@ async function run() {
       }
     });
 
+    // app.get("/teacher/:id", async (req, res) => {
+    //   const { id } = req.params;
+    //   console.log("Fetching teacher by ID:", id);
+
+    //   try {
+    //     const result = await Teachers.findOne({ _id: new ObjectId(id) });
+
+    //     if (result) {
+    //       res.status(200).json(result);
+    //     } else {
+    //       res.status(404).json({ message: "Teacher not found" });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching teacher data:", error);
+    //     res.status(500).json({ message: "Internal Server Error" });
+    //   }
+    // });
+
     // delete teacher
     // Admin can accept or delete one teacher.... used in Teacher.jsx component of admin dashboard
+
     app.delete("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
