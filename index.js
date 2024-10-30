@@ -267,30 +267,19 @@ async function run() {
       }
     });
 
-    // Performance Api [Nishi]
-    // used for update feedback, mark by teacher.. used in MyStudents.jsx & AssignedStudents.jsx in Teacher Dashboard
+    // Performance Api
+    // used for update feedback, mark. used in MyStudents.jsx & AssignedStudents.jsx in Teacher Dashboard
     app.patch("/performance/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const { performanceData, teacherSubject } = req.body;
+      const { performance } = req.body;
 
       try {
+        // Ensure the student exists
         const student = await Students.findOne({ _id: new ObjectId(id) });
-        // for first time performance add[remove this]
-        if (!student.performance) {
-          student.performance = {};
-        }
-        if (!student.performance[teacherSubject]) {
-          student.performance[teacherSubject] = [];
-        }
 
-        student.performance[teacherSubject].push({
-          feedback: performanceData.feedback,
-          mark: performanceData.mark,
-          date: new Date(),
-        });
         const performanceUpdate = await Students.updateOne(
           { _id: new ObjectId(id) },
-          { $set: { performance: student.performance } }
+          { $set: { performance: performance } }
         );
 
         if (performanceUpdate.modifiedCount === 0) {
@@ -300,11 +289,7 @@ async function run() {
         const updatedStudent = await Students.findOne({
           _id: new ObjectId(id),
         });
-        const responsePerformance = {
-          [teacherSubject]: updatedStudent.performance[teacherSubject],
-        };
-
-        res.send(responsePerformance);
+        res.send(updatedStudent.performance);
       } catch (error) {
         console.error("Error updating performance:", error);
         res.status(500).send({ message: "Internal Server Error", error });
@@ -613,7 +598,7 @@ async function run() {
     // Get teacher by email
     // used in "/Dashboard/TeacherProfile/MyProfile"
     // used in Result.jsx page of Teacher Dashboard , MyStudents.jsx, AssignedStudents.jsx
-    app.get("/teacher/:email", verifyToken, async (req, res) => {
+    app.get("/teacher/:email", async (req, res) => {
       const { email } = req.params; // ইমেইল প্যারাম থেকে নেওয়া হচ্ছে
       try {
         const teacher = await Teachers.findOne({ Email: email }); // ইমেইল দিয়ে টিচার খুঁজছি
@@ -629,8 +614,27 @@ async function run() {
       }
     });
 
+    // app.get("/teacher/:id", async (req, res) => {
+    //   const { id } = req.params;
+    //   console.log("Fetching teacher by ID:", id);
+
+    //   try {
+    //     const result = await Teachers.findOne({ _id: new ObjectId(id) });
+
+    //     if (result) {
+    //       res.status(200).json(result);
+    //     } else {
+    //       res.status(404).json({ message: "Teacher not found" });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching teacher data:", error);
+    //     res.status(500).json({ message: "Internal Server Error" });
+    //   }
+    // });
+
     // delete teacher
     // Admin can accept or delete one teacher.... used in Teacher.jsx component of admin dashboard
+
     app.delete("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
