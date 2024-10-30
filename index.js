@@ -561,6 +561,20 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
+    app.get("/home/teacher/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      try {
+        const teacher = await Teachers.findOne(query, {
+          projection: { Name: 1, img: 1, classSchedule: 1, role: 1 },
+        });
+        res.send(teacher);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
     // Update teacher status & Schedule
     // For updating teachers status (accepted/rejected), for set class scheduel.used in Teacher.jsx component of admin dashboard
     app.patch("/teacher/:id", verifyToken, async (req, res) => {
