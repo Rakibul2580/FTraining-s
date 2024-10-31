@@ -558,7 +558,7 @@ async function run() {
 
     //get Teachers
     // (used in Home.jsx and All-Teacher.jsx Route)
-    app.get("/teachers", verifyToken, async (req, res) => {
+    app.get("/teachers", async (req, res) => {
       try {
         let query = {};
         const teachers = await Teachers.find(query).toArray();
