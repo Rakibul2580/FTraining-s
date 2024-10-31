@@ -861,6 +861,20 @@ async function run() {
       }
     });
 
+    app.get("/events/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const event = await Events.findOne({ _id: new ObjectId(id) });
+        if (!event) {
+          return res.status(404).send({ message: "Event not found" });
+        }
+        res.status(200).send(event);
+      } catch (error) {
+        res.status(500).send({ message: "Error fetching review by ID", error });
+      }
+    });
+
     // For delete one event. used in Event page
     app.delete("/event/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
