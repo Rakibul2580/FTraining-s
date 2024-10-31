@@ -704,6 +704,71 @@ async function run() {
       }
     });
 
+    // add teacher feedback (Saroar)
+    // used in "/Dashboard/Student/My-Profile"
+    app.patch("/teacher-feedback/create", verifyToken, async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Teachers.findOneAndUpdate(
+          { Name: formdata.givenTo },
+          {
+            $push: {
+              feedbacks: formdata,
+            },
+          },
+          { returnDocument: "after" }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ msg: "Internal Server Error" });
+      }
+    });
+
+    // find teachers feedbacks by currUser (Saroar)
+    // used in "/Dashboard/Student/My-Profile"
+    app.get("/get-feedbacks", verifyToken, async (req, res) => {
+      const { email } = req.query;
+
+      try {
+        const data = await Teachers.aggregate([
+          {
+            $match: {
+              "feedbacks.createdBy": email,
+            },
+          },
+          {
+            $project: {
+              feedbacks: {
+                $filter: {
+                  input: "$feedbacks",
+                  as: "feedback",
+                  cond: { $eq: ["$$feedback.createdBy", email] },
+                },
+              },
+            },
+          },
+          { $unwind: "$feedbacks" }, // Flatten each feedback object
+          {
+            $group: {
+              _id: null,
+              feedbacks: { $push: "$feedbacks" }, // Combine all into a single array
+            },
+          },
+          { $project: { _id: 0, feedbacks: 1 } }, // Only return the feedbacks array
+        ]).toArray();
+
+        const allFeedbacks = data.flatMap((doc) => doc.feedbacks);
+
+        res.status(200).json({ msg: "success", data: allFeedbacks });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ msg: "Internal Server Error" });
+      }
+    });
+
     // edit info
     app.post("/edit-info", async (req, res) => {
       const formData = req.body;
