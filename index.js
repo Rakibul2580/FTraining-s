@@ -564,7 +564,7 @@ async function run() {
 
     //get Teachers
     // (used in Home.jsx and All-Teacher.jsx Route)
-    app.get("/teachers", verifyToken, async (req, res) => {
+    app.get("/teachers", async (req, res) => {
       try {
         let query = {};
         const teachers = await Teachers.find(query).toArray();
@@ -929,6 +929,20 @@ async function run() {
       } catch (error) {
         console.log("error", error);
         res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    app.get("/events/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const event = await Events.findOne({ _id: new ObjectId(id) });
+        if (!event) {
+          return res.status(404).send({ message: "Event not found" });
+        }
+        res.status(200).send(event);
+      } catch (error) {
+        res.status(500).send({ message: "Error fetching review by ID", error });
       }
     });
 
