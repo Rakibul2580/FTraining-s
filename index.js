@@ -437,31 +437,31 @@ async function run() {
 
     // push a result to the student model (Saroar)
     // used in "Dashboard/Result"
-    app.patch("/student/new-result/:id", verifyToken, async (req, res) => {
-      const { id } = req.params;
+    // app.patch("/student/new-result/:id", verifyToken, async (req, res) => {
+    //   const { id } = req.params;
 
-      const formdata = req.body;
+    //   const formdata = req.body;
 
-      try {
-        const data = await Students.updateOne(
-          { _id: new ObjectId(id) },
-          {
-            $push: {
-              results: {
-                title: formdata.title,
-                result: formdata.result,
-                subject: formdata.subject,
-              },
-            },
-          }
-        );
+    //   try {
+    //     const data = await Students.updateOne(
+    //       { _id: new ObjectId(id) },
+    //       {
+    //         $push: {
+    //           results: {
+    //             title: formdata.title,
+    //             result: formdata.result,
+    //             subject: formdata.subject,
+    //           },
+    //         },
+    //       }
+    //     );
 
-        res.status(200).json({ msg: "success", data });
-      } catch (error) {
-        console.error("Error updating student:", error);
-        res.status(500).json({ message: "Internal Server Error", error });
-      }
-    });
+    //     res.status(200).json({ msg: "success", data });
+    //   } catch (error) {
+    //     console.error("Error updating student:", error);
+    //     res.status(500).json({ message: "Internal Server Error", error });
+    //   }
+    // });
 
     // push a result to the student model (Saroar)
     // used in "Dashboard/Result"
@@ -483,6 +483,12 @@ async function run() {
             },
           }
         );
+
+        if (data.modifiedCount === 0) {
+          return res
+            .status(404)
+            .json({ message: "Student not found or no changes made" });
+        }
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
