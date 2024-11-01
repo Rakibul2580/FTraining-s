@@ -573,7 +573,13 @@ async function run() {
       try {
         let query = {};
         const teachers = await Teachers.find(query, {
-          projection: { Name: 1, img: 1, classSchedule: 1, role: 1 },
+          projection: {
+            Name: 1,
+            img: 1,
+            classSchedule: 1,
+            role: 1,
+            mySpeech: 1,
+          },
         }).toArray();
         res.send(teachers);
       } catch (error) {
@@ -587,8 +593,15 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       try {
         const teacher = await Teachers.findOne(query, {
-          projection: { Name: 1, img: 1, classSchedule: 1, role: 1 },
+          projection: {
+            Name: 1,
+            img: 1,
+            classSchedule: 1,
+            role: 1,
+            mySpeech: 1,
+          },
         });
+        console.log(teacher);
         res.send(teacher);
       } catch (error) {
         console.error("Error fetching teachers:", error);
@@ -807,6 +820,32 @@ async function run() {
       }
     });
 
+    // get number info
+
+    app.get("/count-info", async (req, res) => {
+      try {
+        const teacherCount = await Teachers.countDocuments({});
+        const studentCount = await Students.countDocuments({});
+
+        const studentCountByClass = await Students.aggregate([
+          { $group: { _id: "$Class", count: { $sum: 1 } } },
+          { $addFields: { numericId: { $toInt: "$_id" } } }, // _id কে সংখ্যা হিসেবে কনভার্ট করা
+          { $sort: { numericId: 1 } }, // এখন সংখ্যার ভিত্তিতে সাজানো হচ্ছে
+          { $project: { _id: 1, count: 1 } }, // আগের ফরম্যাটে ফেরত দিচ্ছে
+        ]).toArray();
+
+        res.status(200).json({
+          msg: "success",
+          teacherCount,
+          studentCountByClass,
+          studentCount,
+        });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error: error });
+      }
+    });
+
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
       const { type, title, details, createdBy } = req.body;
@@ -918,6 +957,20 @@ async function run() {
         const data = await Events.find({ createdBy: email })
           .sort({ _id: -1 })
           .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
+      }
+    });
+
+    // for Normal users
+    app.get("/eventById/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Events.findOne({ _id: new ObjectId(id) });
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
@@ -1269,6 +1322,18 @@ async function run() {
         })
           .sort({ _id: -1 })
           .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    //For Normal Users
+    app.get("/get-newsById/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const data = await Newss.findOne({ _id: new ObjectId(id) });
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
