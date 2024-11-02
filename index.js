@@ -37,6 +37,7 @@ async function run() {
     const Sheets = database.collection("Sheet");
     const AcademicRules = database.collection("AcademicRule");
     const ExamSystem = database.collection("ExamSystem");
+    const Contacts = database.collection("Contact");
 
     // info
     const Info = database.collection("Info");
@@ -1673,6 +1674,57 @@ async function run() {
         return res.status(200).json({ msg: "success", data: data[0] });
       } catch (error) {
         console.log("error", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // create contacts (Saroar)
+    // used in "/Contact"
+    app.post("/contact/create", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Contacts.insertOne({
+          ...formdata,
+          createdAt: new Date(),
+          status: "Pending",
+        });
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get contacts (Saroar)
+    // used in "/Contact"
+    app.get("/contact/all", async (req, res) => {
+      try {
+        const data = await Contacts.find({}).sort({ _id: -1 }).toArray();
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // mark contac as replied or not (Saroar)
+    // used in "/Contact"
+    app.patch("/contact/change-status", async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Contacts.updateOne(
+          {
+            _id: new ObjectId(formdata.id),
+          },
+          {
+            $set: {
+              status: formdata.status,
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
         res.status(500).json({ msg: "error", error });
       }
     });
