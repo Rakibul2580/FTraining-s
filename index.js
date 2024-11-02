@@ -71,13 +71,13 @@ async function run() {
     app.get("/", async (req, res) => {
       try {
         // সকল শিক্ষার্থীর ডেটা বের করা
-        const students = await Teachers.find({}).toArray();
+        const students = await Students.find({}).toArray();
 
         // প্রতিটি শিক্ষার্থীর ডেটাতে নতুন fees ফিল্ড যোগ করা
         // for (const student of students) {
-        //   await Teachers.updateOne(
+        //   await Students.updateOne(
         //     { _id: student._id },
-        //     { $set: { mySpeech: "Hello" } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
+        //     { $set: { "performance.total": 1 } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
         //   );
         // }
 
@@ -277,6 +277,13 @@ async function run() {
       try {
         // Ensure the student exists
         const student = await Students.findOne({ _id: new ObjectId(id) });
+        const studentMark = Number(student?.performance?.mark) || 0;
+        const newMark = Number(performance?.mark) || 0;
+        const total = student?.performance?.total || 0;
+
+        // মার্ক যোগ করা
+        performance.mark = studentMark + newMark;
+        performance.total = total + 1;
 
         const performanceUpdate = await Students.updateOne(
           { _id: new ObjectId(id) },
@@ -335,11 +342,11 @@ async function run() {
       }
     });
 
-    app.patch("/student/discount/:id", async (req, res) => {
+    app.patch("/student/discount/:email", async (req, res) => {
       const data = req.body;
 
       try {
-        const student = await Students.findOne({ _id: new ObjectId(data.id) });
+        const student = await Students.findOne({ Email: data.email });
         if (!student) {
           return res.status(404).send({ message: "Student Id is Incorrect" });
         }
@@ -580,7 +587,13 @@ async function run() {
       try {
         let query = {};
         const teachers = await Teachers.find(query, {
-          projection: { Name: 1, img: 1, classSchedule: 1, role: 1 },
+          projection: {
+            Name: 1,
+            img: 1,
+            classSchedule: 1,
+            role: 1,
+            mySpeech: 1,
+          },
         }).toArray();
         res.send(teachers);
       } catch (error) {
@@ -594,8 +607,15 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       try {
         const teacher = await Teachers.findOne(query, {
-          projection: { Name: 1, img: 1, classSchedule: 1, role: 1 },
+          projection: {
+            Name: 1,
+            img: 1,
+            classSchedule: 1,
+            role: 1,
+            mySpeech: 1,
+          },
         });
+        console.log(teacher);
         res.send(teacher);
       } catch (error) {
         console.error("Error fetching teachers:", error);
@@ -814,6 +834,32 @@ async function run() {
       }
     });
 
+    // get number info
+
+    app.get("/count-info", async (req, res) => {
+      try {
+        const teacherCount = await Teachers.countDocuments({});
+        const studentCount = await Students.countDocuments({});
+
+        const studentCountByClass = await Students.aggregate([
+          { $group: { _id: "$Class", count: { $sum: 1 } } },
+          { $addFields: { numericId: { $toInt: "$_id" } } }, // _id কে সংখ্যা হিসেবে কনভার্ট করা
+          { $sort: { numericId: 1 } }, // এখন সংখ্যার ভিত্তিতে সাজানো হচ্ছে
+          { $project: { _id: 1, count: 1 } }, // আগের ফরম্যাটে ফেরত দিচ্ছে
+        ]).toArray();
+
+        res.status(200).json({
+          msg: "success",
+          teacherCount,
+          studentCountByClass,
+          studentCount,
+        });
+      } catch (error) {
+        console.log("error", error);
+        res.status(500).json({ msg: "error", error: error });
+      }
+    });
+
     // create new notice
     app.post("/notices/create", verifyToken, async (req, res) => {
       const { type, title, details, createdBy } = req.body;
@@ -933,17 +979,17 @@ async function run() {
       }
     });
 
-    app.get("/events/:id", async (req, res) => {
+    // for Normal users
+    app.get("/eventById/:id", async (req, res) => {
       const { id } = req.params;
 
       try {
-        const event = await Events.findOne({ _id: new ObjectId(id) });
-        if (!event) {
-          return res.status(404).send({ message: "Event not found" });
-        }
-        res.status(200).send(event);
+        const data = await Events.findOne({ _id: new ObjectId(id) });
+
+        res.status(200).json({ msg: "success", data });
       } catch (error) {
-        res.status(500).send({ message: "Error fetching review by ID", error });
+        console.log("error", error);
+        res.status(500).json({ msg: "failed", error });
       }
     });
 
@@ -1290,6 +1336,18 @@ async function run() {
         })
           .sort({ _id: -1 })
           .toArray();
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    //For Normal Users
+    app.get("/get-newsById/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const data = await Newss.findOne({ _id: new ObjectId(id) });
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
