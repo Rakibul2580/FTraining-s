@@ -342,11 +342,11 @@ async function run() {
       }
     });
 
-    app.patch("/student/discount/:id", async (req, res) => {
+    app.patch("/student/discount/:email", async (req, res) => {
       const data = req.body;
 
       try {
-        const student = await Students.findOne({ _id: new ObjectId(data.id) });
+        const student = await Students.findOne({ Email: data.email });
         if (!student) {
           return res.status(404).send({ message: "Student Id is Incorrect" });
         }
