@@ -80,8 +80,13 @@ async function run() {
         //     { $set: { "performance.total": 1 } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
         //   );
         // }
+        const x = 200;
+        const y = x - (x * 2) / 100;
 
-        res.send({ message: "Fees field added to all students successfully!" });
+        res.send({
+          y,
+          message: "Fees field added to all students successfully!",
+        });
       } catch (error) {
         console.error("Error fetching students:", error);
         res.status(500).send({ message: "Internal Server Error" });
@@ -94,10 +99,21 @@ async function run() {
         feesData.status = "Pending";
         const students = await Students.find({ Class: formClass }).toArray();
         for (const student of students) {
-          await Students.updateOne(
-            { _id: student._id },
-            { $push: { fees: feesData } }
-          );
+          if (student?.discount) {
+            feesData.amount =
+              feesData.amount -
+              (feesData.amount * Number(student?.discount)) / 100;
+            feesData.discount = student.discount;
+            await Students.updateOne(
+              { _id: student._id },
+              { $push: { fees: feesData } }
+            );
+          } else {
+            await Students.updateOne(
+              { _id: student._id },
+              { $push: { fees: feesData } }
+            );
+          }
         }
 
         delete feesData.status;
@@ -348,16 +364,14 @@ async function run() {
       try {
         const student = await Students.findOne({ Email: data.email });
         if (!student) {
-          return res.status(404).send({ message: "Student Id is Incorrect" });
+          return res.send({ message: "Student Id is Incorrect" });
         }
         if (data.type === "Temporary") {
           const feeData = student.fees.find(
             (fee) => fee.randomNumber === data.randomNumber
           );
           if (!feeData) {
-            return res
-              .status(404)
-              .send({ message: "Random Number is Incorrect" });
+            return res.send({ message: "Random Number is Incorrect" });
           }
 
           feeData.amount = feeData.amount - data.amount;
@@ -365,7 +379,7 @@ async function run() {
 
           const result = await Students.updateOne(
             {
-              _id: new ObjectId(data.id),
+              Email: data.email,
               "fees.randomNumber": data.randomNumber,
             },
             {
@@ -381,13 +395,14 @@ async function run() {
           });
         } else {
           const result = await Students.updateOne(
-            { _id: new ObjectId(data.id) },
+            { Email: data.email },
             {
               $set: {
                 discount: data.amount,
               },
             }
           );
+          console.log(result, data.amount);
           res.send({
             message: "Permanent Discount applied successfully",
             updatedFee: result,
