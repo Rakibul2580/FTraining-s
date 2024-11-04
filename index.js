@@ -430,7 +430,7 @@ async function run() {
     });
 
     // Get student class for the teacher Rakibul
-    app.get("/students/:class", verifyToken, async (req, res) => {
+    app.get("/students/:class", async (req, res) => {
       const classInfo = req.params.class;
 
       try {
@@ -440,6 +440,96 @@ async function run() {
       } catch (error) {
         console.error("Error fetching students:", error);
         res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // get results from student (saroar)
+    // used in "/Dashboard/Result"
+    app.get(
+      "/students/get-results/:studentId/:classe/:subject",
+      verifyToken,
+      async (req, res) => {
+        const { classe, subject, studentId } = req.params;
+
+        try {
+          const data = await Students.find({
+            _id: new ObjectId(studentId),
+            Class: classe,
+          }).toArray();
+
+          const thisSubjectResults = data
+            .flatMap((item) => item.results || [])
+            .filter((result) => result.subject === subject);
+
+          res.status(200).json({ msg: "success", data: thisSubjectResults });
+        } catch (error) {
+          console.log("error", error);
+          res.status(500).json({ msg: "error", error });
+        }
+      }
+    );
+
+    // update existing results
+    // used in "/Dashboard/Result"
+    app.put(
+      "/students/update-result/:studentId/:classe/:subject",
+      async (req, res) => {
+        const { result } = req.body; // New result value
+        const { classe, subject, studentId } = req.params;
+
+        try {
+          const updatedStudent = await Students.updateOne(
+            {
+              _id: new ObjectId(studentId),
+              Class: classe.toString(),
+              "results.subject": subject,
+            },
+            { $set: { "results.$[elem].result": result } },
+            { arrayFilters: [{ "elem.subject": subject }] }
+          );
+
+          if (updatedStudent.modifiedCount === 0) {
+            return res
+              .status(406)
+              .json({ msg: "No matching student or result found" });
+          }
+
+          res.status(200).json({ msg: "Result updated successfully" });
+        } catch (error) {
+          console.error("Error updating result:", error);
+          res.status(500).json({ msg: "error", error });
+        }
+      }
+    );
+
+    // update student class
+    // used in "/Dashboard/Result"
+    app.patch("/students/update-class/:studentId", async (req, res) => {
+      const { Class } = req.body;
+      const { studentId } = req.params;
+
+      try {
+        const updatedStudent = await Students.updateOne(
+          {
+            _id: new ObjectId(studentId),
+          },
+          {
+            $set: {
+              Class: Class.toString(),
+            },
+          }
+        );
+
+        if (updatedStudent.modifiedCount === 0) {
+          return res
+            .status(404)
+            .json({ msg: "No matching student or result found" });
+        }
+
+        res.status(200).json({ msg: "Class updated successfully" });
+      } catch (error) {
+        console.error("Error updating result:", error);
+        res.status(500).json({ msg: "error", error });
       }
     });
 
