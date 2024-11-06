@@ -710,14 +710,20 @@ async function run() {
     app.get("/home/teacher/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
+      console.log("q", query);
+
       try {
         const teacher = await Teachers.findOne(query, {
           projection: {
             Name: 1,
+            Number: 1,
+            Email: 1,
             img: 1,
             classSchedule: 1,
             role: 1,
             mySpeech: 1,
+            currSalary: 1,
+            joiningDate: 1,
           },
         });
         console.log(teacher);
@@ -727,27 +733,55 @@ async function run() {
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
+
     // Update teacher status & Schedule
     // For updating teachers status (accepted/rejected), for set class scheduel.used in Teacher.jsx component of admin dashboard
     app.patch("/teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const updatedData = req.body;
-      const updateFields = {};
+      const { joiningDate, currSalary, role, classSchedule, status } = req.body;
 
-      if (updatedData.name) updateFields.Name = updatedData.name;
-      if (updatedData.email) updateFields.Email = updatedData.email;
-      if (updatedData.number) updateFields.Number = updatedData.number;
-      if (updatedData.subject) updateFields.Subject = updatedData.subject;
-      if (updatedData.role) updateFields.role = updatedData.role;
-      if (updatedData.status) updateFields.status = updatedData.status;
-      if (updatedData.classSchedule)
-        updateFields.classSchedule = updatedData.classSchedule;
+      try {
+        const updatedTeacher = await Teachers.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              joiningDate,
+              currSalary,
+              role,
+              classSchedule,
+              status,
+            },
+          }
+        );
+
+        if (updatedTeacher) {
+          res.send(updatedTeacher);
+        } else {
+          res.status(404).send({ message: "Teacher not found" });
+        }
+      } catch (error) {
+        console.error("Error updating teacher data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // Update teacher status & Schedule
+    // For updating teachers data
+    app.patch("/update-teacher/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { currSalary, joiningDate, role } = req.body;
 
       try {
         const updatedTeacher = await Teachers.findOneAndUpdate(
           { _id: new ObjectId(id) },
-          { $set: updateFields },
-          { new: true, upsert: true }
+          {
+            $set: {
+              currSalary,
+              joiningDate,
+              role,
+            },
+          },
+          { returnDocument: "after" }
         );
 
         if (updatedTeacher) {
