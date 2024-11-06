@@ -710,7 +710,6 @@ async function run() {
     app.get("/home/teacher/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
-      console.log("q", query);
 
       try {
         const teacher = await Teachers.findOne(query, {
@@ -726,7 +725,6 @@ async function run() {
             joiningDate: 1,
           },
         });
-        console.log(teacher);
         res.send(teacher);
       } catch (error) {
         console.error("Error fetching teachers:", error);
@@ -767,7 +765,7 @@ async function run() {
 
     // Update teacher status & Schedule
     // For updating teachers data
-    app.patch("/update-teacher/:id", verifyToken, async (req, res) => {
+    app.patch("/admin-update-teacher/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { currSalary, joiningDate, role } = req.body;
 
