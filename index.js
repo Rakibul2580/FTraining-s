@@ -1349,21 +1349,11 @@ async function run() {
     // [Nishi]
     // Api for post an Application, used in Application.jsx page of Teacher Dashboard..
     app.post("/application", verifyToken, async (req, res) => {
-      const { subject, message, teacherId, teacherName } = req.body;
-      const status = "pending";
-      console.log(req.body);
+      const data = req.body;
+      data.status = "pending";
 
       try {
-        const newApplication = {
-          subject,
-          message,
-          teacherId,
-          teacherName,
-          status,
-          submittedAt: new Date(),
-        };
-
-        const result = await Application.insertOne(newApplication);
+        const result = await Application.insertOne(data);
         res
           .status(201)
           .send({ message: "Application submitted successfully", result });
@@ -1408,11 +1398,19 @@ async function run() {
     });
 
     // get applications by teacherId for display that teacher application and used in Application.jsx page pf teacher Dashboard..
-    app.get("/applications/:teacherId", verifyToken, async (req, res) => {
-      const { teacherId } = req.params;
+    app.get("/applications/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const { activeTab } = req.query;
       try {
-        const applications = await Application.find({ teacherId }).toArray();
-        res.status(200).send(applications);
+        if (activeTab === "received") {
+          const applications = await Application.find({ fromId: id }).toArray();
+          res.status(200).send(applications);
+        } else if (activeTab === "send") {
+          const applications = await Application.find({ toId: id }).toArray();
+          res.status(200).send(applications);
+        } else {
+          res.status(400).send({ message: "Invalid tab selection" });
+        }
       } catch (error) {
         console.error("Error fetching applications:", error);
         res.status(500).send({ message: "Internal Server Error" });
