@@ -1351,6 +1351,7 @@ async function run() {
     app.post("/application", verifyToken, async (req, res) => {
       const { subject, message, teacherId, teacherName } = req.body;
       const status = "pending";
+      console.log(req.body);
 
       try {
         const newApplication = {
