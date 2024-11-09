@@ -1363,18 +1363,6 @@ async function run() {
       }
     });
 
-    // [Nishi]
-    // To fetch applications on the ApplicationManagement.jsx page for the admin dashboard, but it's currently being used in the teacher dashboard as well.
-    app.get("/applications", verifyToken, async (req, res) => {
-      try {
-        const applications = await Application.find({}).toArray();
-        res.status(200).send(applications);
-      } catch (error) {
-        console.error("Error fetching applications:", error);
-        res.status(500).send({ message: "Internal Server Error" });
-      }
-    });
-
     // PATCH API to update the status of an application, used in ApplicationManagement.jsx page of Admin dashboard.
     app.patch("/application/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
