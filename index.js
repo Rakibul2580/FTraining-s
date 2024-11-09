@@ -38,6 +38,7 @@ async function run() {
     const AcademicRules = database.collection("AcademicRule");
     const ExamSystem = database.collection("ExamSystem");
     const Contacts = database.collection("Contact");
+    const Members = database.collection("Member");
 
     // info
     const Info = database.collection("Info");
@@ -1917,6 +1918,32 @@ async function run() {
           }
         );
 
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // add new member
+    // used in "/Dashboard/AddMembers"
+    app.post("/add-new-member", verifyToken, async (req, res) => {
+      const formdata = req.body;
+
+      try {
+        const data = await Members.insertOne({
+          ...formdata,
+        });
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // get all members
+    // used in "/Dashboard/AddMembers"
+    app.get("/get-all-members", async (req, res) => {
+      try {
+        const data = await Members.find().toArray();
         res.status(200).json({ msg: "success", data });
       } catch (error) {
         res.status(500).json({ msg: "error", error });
