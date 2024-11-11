@@ -737,17 +737,14 @@ async function run() {
       const { joiningDate, currSalary, role, classSchedule, status } = req.body;
 
       try {
-        const updatedTeacher = await Teachers.updateOne(
+        const updatedTeacher = await Teachers.findOneAndUpdate(
           { _id: new ObjectId(id) },
           {
             $set: {
-              joiningDate,
-              currSalary,
-              role,
-              classSchedule,
-              status,
+              ...req.body,
             },
-          }
+          },
+          { returnDocument: "after" }
         );
 
         if (updatedTeacher) {
@@ -1930,6 +1927,25 @@ async function run() {
       try {
         const data = await Members.find().toArray();
         res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    // delet member
+    // used in "/Dashboard/AddMembers"
+    app.delete("/member-delete/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Members.findOneAndDelete({
+          _id: new ObjectId(id),
+        });
+
+        res.status(200).json({
+          msg: "success",
+          data,
+        });
       } catch (error) {
         res.status(500).json({ msg: "error", error });
       }
