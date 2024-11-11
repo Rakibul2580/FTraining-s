@@ -740,17 +740,14 @@ async function run() {
       const { joiningDate, currSalary, role, classSchedule, status } = req.body;
 
       try {
-        const updatedTeacher = await Teachers.updateOne(
+        const updatedTeacher = await Teachers.findOneAndUpdate(
           { _id: new ObjectId(id) },
           {
             $set: {
-              joiningDate,
-              currSalary,
-              role,
-              classSchedule,
-              status,
+              ...req.body,
             },
-          }
+          },
+          { returnDocument: "after" }
         );
 
         if (updatedTeacher) {
