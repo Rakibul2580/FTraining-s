@@ -99,50 +99,32 @@ async function run() {
       try {
         feesData.status = "Pending";
         const students = await Students.find({ Class: formClass }).toArray();
+
         for (const student of students) {
-          if (student?.discount) {
-            feesData.amount =
-              feesData.amount -
-              (feesData.amount * Number(student?.discount)) / 100;
-            feesData.discount = student.discount;
+          const studentFeesData = { ...feesData };
+
+          if (!student?.discount) {
             await Students.updateOne(
               { _id: student._id },
-              { $push: { fees: feesData } }
+              { $push: { fees: studentFeesData } }
             );
           } else {
+            studentFeesData.amount =
+              studentFeesData.amount -
+              (studentFeesData.amount * Number(student?.discount)) / 100;
+            studentFeesData.discount = student.discount;
+
             await Students.updateOne(
               { _id: student._id },
-              { $push: { fees: feesData } }
+              { $push: { fees: studentFeesData } }
             );
           }
+          console.log(studentFeesData);
         }
-
-        delete feesData.status;
-        feesData.date = new Date().toISOString().slice(0, 10);
-        feesData.class = formClass;
-        await AllFees.insertOne(feesData);
-
-        // for (const student of students) {
-        //   await Students.updateOne(
-        //     { _id: student._id },
-        //     { $pull: { fees: query } } // fees ফিল্ড থেকে নির্দিষ্ট কুইরি রিমুভ করা হচ্ছে
-        //   );
-        // }
-
-        // প্রতিটি শিক্ষার্থীর ডেটাতে নতুন fees ফিল্ড যোগ করা
-        // for (const student of students) {
-        //   await Students.updateOne(
-        //     { _id: student._id },
-        //     { $set: { fees: [] } } // fees ফিল্ড যোগ করা, যেটি একটি খালি অ্যারে
-        //   );
-        // }
-
-        res.status(200).send({
-          message: "Query added to all students in Class 1 successfully!",
-        });
+        res.status(200).json({ message: "Fees added successfully" });
       } catch (error) {
-        console.error("Error updating attendance:", error.message);
-        res.status(500).send({ message: "Server error" });
+        console.error(error);
+        res.status(500).json({ error: "Failed to add fees" });
       }
     });
 
@@ -359,7 +341,7 @@ async function run() {
       }
     });
 
-    app.patch("/student/discount/:email", async (req, res) => {
+    app.patch("/student/discount/:email", verifyToken, async (req, res) => {
       const data = req.body;
 
       try {
@@ -412,6 +394,21 @@ async function run() {
       } catch (error) {
         console.error("Error updating student:", error);
         res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+
+    app.get("/discount", verifyToken, async (req, res) => {
+      try {
+        const permanent = await Students.find({
+          discount: { $exists: true },
+        }).toArray();
+        const temporary = await Students.find({
+          "fees.discount": { $exists: true },
+        }).toArray();
+        res.status(200).send({ temporary, permanent });
+      } catch (error) {
+        console.error("Error retrieving students:", error);
+        res.status(500).send({ message: "Internal Server Error" });
       }
     });
 
