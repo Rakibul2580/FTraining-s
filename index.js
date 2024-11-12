@@ -121,6 +121,10 @@ async function run() {
           }
           console.log(studentFeesData);
         }
+        delete feesData.status;
+        feesData.date = new Date().toISOString().slice(0, 10);
+        feesData.class = formClass;
+        await AllFees.insertOne(feesData);
         res.status(200).json({ message: "Fees added successfully" });
       } catch (error) {
         console.error(error);
@@ -343,7 +347,6 @@ async function run() {
 
     app.patch("/student/discount/:email", verifyToken, async (req, res) => {
       const data = req.body;
-
       try {
         const student = await Students.findOne({ Email: data.email });
         if (!student) {
@@ -408,6 +411,31 @@ async function run() {
         res.status(200).send({ temporary, permanent });
       } catch (error) {
         console.error("Error retrieving students:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+    const { ObjectId } = require("mongodb");
+
+    app.delete("/student/discount/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          { $unset: { discount: "" } }
+        );
+
+        if (result.modifiedCount > 0) {
+          res
+            .status(200)
+            .send({ message: "Discount key deleted successfully" });
+        } else {
+          res
+            .status(404)
+            .send({ message: "Student not found or no discount key" });
+        }
+      } catch (error) {
+        console.error("Error deleting discount key:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
