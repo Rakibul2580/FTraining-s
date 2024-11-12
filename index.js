@@ -468,7 +468,9 @@ async function run() {
           const data = await Students.find({
             _id: new ObjectId(studentId),
             Class: classe,
-          }).toArray();
+          })
+            .sort({ _id: -1 })
+            .toArray();
 
           const thisSubjectResults = data
             .flatMap((item) => item.results || [])
@@ -485,20 +487,25 @@ async function run() {
     // update existing results
     // used in "/Dashboard/Result"
     app.put(
-      "/students/update-result/:studentId/:classe/:subject",
+      "/students/update-result/:studentId/:classe/:subject/:title",
       async (req, res) => {
         const { result } = req.body; // New result value
-        const { classe, subject, studentId } = req.params;
+        const { classe, subject, title, studentId } = req.params;
 
         try {
           const updatedStudent = await Students.updateOne(
             {
               _id: new ObjectId(studentId),
               Class: classe.toString(),
-              "results.subject": subject,
             },
-            { $set: { "results.$[elem].result": result } },
-            { arrayFilters: [{ "elem.subject": subject }] }
+            {
+              $set: {
+                "results.$[elem].result": result,
+              },
+            },
+            {
+              arrayFilters: [{ "elem.subject": subject, "elem.title": title }],
+            }
           );
 
           if (updatedStudent.modifiedCount === 0) {
@@ -510,7 +517,7 @@ async function run() {
           res.status(200).json({ msg: "Result updated successfully" });
         } catch (error) {
           console.error("Error updating result:", error);
-          res.status(500).json({ msg: "error", error });
+          res.status(500).json({ msg: "Error updating result", error });
         }
       }
     );
@@ -1087,7 +1094,7 @@ async function run() {
     // user in "Dashboard/Others" and 'homepage', dont protect it, its public
     app.get("/events", async (req, res) => {
       try {
-        const data = await Events.find({}).toArray();
+        const data = await Events.find({}).sort({ _id: -1 }).toArray();
 
         res.status(200).json({ msg: "success", data });
       } catch (error) {
