@@ -680,6 +680,34 @@ async function run() {
       }
     });
 
+    // update student class and result (Saroar)
+    // used in "Dashboard/UpdateResult"
+    app.patch("/student/update-class-result/:id", async (req, res) => {
+      const { Class, classRole, Section } = req.body;
+      const newClass = parseInt(Class) + 1;
+      const { id } = req.params;
+      console.log("newClass", newClass);
+      console.log("id", id);
+
+      try {
+        const data = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              Class: newClass.toString(),
+              classRoll: classRole.toString(),
+              Section: Section,
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
     //get Teachers
     // (used in Home.jsx and All-Teacher.jsx Route)
     app.get("/teachers", async (req, res) => {
