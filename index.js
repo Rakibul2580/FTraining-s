@@ -121,6 +121,10 @@ async function run() {
           }
           console.log(studentFeesData);
         }
+        delete feesData.status;
+        feesData.date = new Date().toISOString().slice(0, 10);
+        feesData.class = formClass;
+        await AllFees.insertOne(feesData);
         res.status(200).json({ message: "Fees added successfully" });
       } catch (error) {
         console.error(error);
@@ -343,7 +347,6 @@ async function run() {
 
     app.patch("/student/discount/:email", verifyToken, async (req, res) => {
       const data = req.body;
-
       try {
         const student = await Students.findOne({ Email: data.email });
         if (!student) {
@@ -408,6 +411,31 @@ async function run() {
         res.status(200).send({ temporary, permanent });
       } catch (error) {
         console.error("Error retrieving students:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+    const { ObjectId } = require("mongodb");
+
+    app.delete("/student/discount/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          { $unset: { discount: "" } }
+        );
+
+        if (result.modifiedCount > 0) {
+          res
+            .status(200)
+            .send({ message: "Discount key deleted successfully" });
+        } else {
+          res
+            .status(404)
+            .send({ message: "Student not found or no discount key" });
+        }
+      } catch (error) {
+        console.error("Error deleting discount key:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
@@ -761,6 +789,59 @@ async function run() {
         res.send(teacher);
       } catch (error) {
         console.error("Error fetching teachers:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.patch("/teacher/Attendance/:id", async (req, res) => {
+      const { id } = req.params; // টিচার আইডি
+      const { check } = req.query; // Check-in বা Check-out
+
+      try {
+        if (check === "out") {
+          const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
+
+          const lastIndex = teacher.attendance.length - 1;
+          console.log("Updating the last object with check-out...");
+
+          // শেষ অবজেক্ট আপডেট করা
+          const updatedTeacher = await Teachers.updateOne(
+            { _id: new ObjectId(id) },
+            {
+              $set: {
+                [`attendance.${lastIndex}.check`]: "out", // চেক আউট হিসেবে চিহ্নিত করা
+                [`attendance.${lastIndex}.out`]: new Date(), // চেক আউট সময় সংযুক্ত করা
+              },
+            }
+          );
+
+          if (updatedTeacher.modifiedCount > 0) {
+            res.status(200).send({
+              message: "Last attendance updated to check-out successfully!",
+            });
+          } else {
+            res.status(404).send({
+              message: "Failed to update the last attendance object.",
+            });
+          }
+        } else {
+          const newAttendance = {
+            check: "in",
+            in: new Date(),
+            out: "", // চেক আউট ফাঁকা রাখুন
+          };
+
+          const updatedTeacher = await Teachers.updateOne(
+            { _id: new ObjectId(id) },
+            { $push: { attendance: newAttendance } } // অ্যারেতে নতুন অবজেক্ট যোগ করুন
+          );
+
+          res
+            .status(200)
+            .send({ message: "New check-in entry added successfully!" });
+        }
+      } catch (error) {
+        console.error("Error updating attendance:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
