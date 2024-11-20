@@ -708,6 +708,34 @@ async function run() {
       }
     });
 
+    // update student class and result (Saroar)
+    // used in "Dashboard/UpdateResult"
+    app.patch("/student/update-class-result/:id", async (req, res) => {
+      const { Class, classRole, Section } = req.body;
+      const newClass = parseInt(Class) + 1;
+      const { id } = req.params;
+      console.log("newClass", newClass);
+      console.log("id", id);
+
+      try {
+        const data = await Students.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              Class: newClass.toString(),
+              classRoll: classRole.toString(),
+              Section: Section,
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        console.error("Error", error);
+        res.status(500).json({ message: "Internal Server Error", error });
+      }
+    });
+
     //get Teachers
     // (used in Home.jsx and All-Teacher.jsx Route)
     app.get("/teachers", async (req, res) => {
@@ -1434,6 +1462,7 @@ async function run() {
     app.post("/application", verifyToken, async (req, res) => {
       const data = req.body;
       data.status = "pending";
+      data.currStatus = "notOpened";
 
       try {
         const result = await Application.insertOne(data);
@@ -1484,6 +1513,27 @@ async function run() {
         }
       } catch (error) {
         console.error("Error fetching applications:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // update the currStatus.
+    app.patch("/set-open-contact/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Application.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { currStatus: "opened" } }
+        );
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Application not found" });
+        }
+        res
+          .status(200)
+          .send({ message: `Application status updated` });
+      } catch (error) {
+        console.error("Error updating application status:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
