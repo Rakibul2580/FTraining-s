@@ -1381,6 +1381,7 @@ async function run() {
     app.post("/application", verifyToken, async (req, res) => {
       const data = req.body;
       data.status = "pending";
+      data.currStatus = "notOpened";
 
       try {
         const result = await Application.insertOne(data);
@@ -1431,6 +1432,27 @@ async function run() {
         }
       } catch (error) {
         console.error("Error fetching applications:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // update the currStatus.
+    app.patch("/set-open-contact/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const result = await Application.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { currStatus: "opened" } }
+        );
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Application not found" });
+        }
+        res
+          .status(200)
+          .send({ message: `Application status updated` });
+      } catch (error) {
+        console.error("Error updating application status:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
