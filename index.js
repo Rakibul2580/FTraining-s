@@ -765,6 +765,59 @@ async function run() {
       }
     });
 
+    app.patch("/teacher/Attendance/:id", async (req, res) => {
+      const { id } = req.params; // টিচার আইডি
+      const { check } = req.query; // Check-in বা Check-out
+
+      try {
+        if (check === "out") {
+          const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
+
+          const lastIndex = teacher.attendance.length - 1;
+          console.log("Updating the last object with check-out...");
+
+          // শেষ অবজেক্ট আপডেট করা
+          const updatedTeacher = await Teachers.updateOne(
+            { _id: new ObjectId(id) },
+            {
+              $set: {
+                [`attendance.${lastIndex}.check`]: "out", // চেক আউট হিসেবে চিহ্নিত করা
+                [`attendance.${lastIndex}.out`]: new Date(), // চেক আউট সময় সংযুক্ত করা
+              },
+            }
+          );
+
+          if (updatedTeacher.modifiedCount > 0) {
+            res.status(200).send({
+              message: "Last attendance updated to check-out successfully!",
+            });
+          } else {
+            res.status(404).send({
+              message: "Failed to update the last attendance object.",
+            });
+          }
+        } else {
+          const newAttendance = {
+            check: "in",
+            in: new Date(),
+            out: "", // চেক আউট ফাঁকা রাখুন
+          };
+
+          const updatedTeacher = await Teachers.updateOne(
+            { _id: new ObjectId(id) },
+            { $push: { attendance: newAttendance } } // অ্যারেতে নতুন অবজেক্ট যোগ করুন
+          );
+
+          res
+            .status(200)
+            .send({ message: "New check-in entry added successfully!" });
+        }
+      } catch (error) {
+        console.error("Error updating attendance:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
     // Update teacher status & Schedule
     // For updating teachers status (accepted/rejected), for set class scheduel.used in Teacher.jsx component of admin dashboard
     app.patch("/teacher/:id", verifyToken, async (req, res) => {
