@@ -1518,20 +1518,17 @@ async function run() {
     });
 
     // update the currStatus.
-    app.patch("/set-open-contact/:id", verifyToken, async (req, res) => {
+    app.patch("/set-open-application/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
+      console.log("id", id);
 
       try {
-        const result = await Application.updateOne(
+        await Application.updateOne(
           { _id: new ObjectId(id) },
           { $set: { currStatus: "opened" } }
         );
-        if (result.modifiedCount === 0) {
-          return res.status(404).send({ message: "Application not found" });
-        }
-        res
-          .status(200)
-          .send({ message: `Application status updated` });
+
+        res.status(200).send({ message: `Application status updated` });
       } catch (error) {
         console.error("Error updating application status:", error);
         res.status(500).send({ message: "Internal Server Error" });
