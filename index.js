@@ -796,45 +796,67 @@ async function run() {
     app.patch("/teacher/Attendance/:id", async (req, res) => {
       const { id } = req.params; // টিচার আইডি
       const { check } = req.query; // Check-in বা Check-out
-
       try {
+        const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
+
+        const lastIndex = teacher.attendance.length - 1;
+        const date = new Date(); // বর্তমান তারিখ
         if (check === "out") {
-          const teacher = await Teachers.findOne({ _id: new ObjectId(id) });
+          const day = date.getDay(); // সপ্তাহের দিন সংখ্যা বের করুন
 
-          const lastIndex = teacher.attendance.length - 1;
-          console.log("Updating the last object with check-out...");
-
-          // শেষ অবজেক্ট আপডেট করা
-          const updatedTeacher = await Teachers.updateOne(
-            { _id: new ObjectId(id) },
-            {
-              $set: {
-                [`attendance.${lastIndex}.check`]: "out", // চেক আউট হিসেবে চিহ্নিত করা
-                [`attendance.${lastIndex}.out`]: new Date(), // চেক আউট সময় সংযুক্ত করা
-              },
-            }
-          );
-
-          if (updatedTeacher.modifiedCount > 0) {
-            res.status(200).send({
-              message: "Last attendance updated to check-out successfully!",
-            });
+          if (day === 4) {
+            const fridayAttendance = {
+              check: "Friday",
+              in: date,
+              out: "",
+            };
+            const Friday = await Teachers.updateOne(
+              { _id: new ObjectId(id) },
+              { $push: { attendance: fridayAttendance } } // অ্যারেতে নতুন অবজেক্ট যোগ করুন
+            );
+            const updatedTeacher = await Teachers.updateOne(
+              { _id: new ObjectId(id) },
+              {
+                $set: {
+                  [`attendance.${lastIndex}.check`]: "out", // চেক আউট হিসেবে চিহ্নিত করা
+                  [`attendance.${lastIndex}.out`]: date, // চেক আউট সময় সংযুক্ত করা
+                },
+              }
+            );
           } else {
-            res.status(404).send({
-              message: "Failed to update the last attendance object.",
-            });
+            const updatedTeacher = await Teachers.updateOne(
+              { _id: new ObjectId(id) },
+              {
+                $set: {
+                  [`attendance.${lastIndex}.check`]: "out", // চেক আউট হিসেবে চিহ্নিত করা
+                  [`attendance.${lastIndex}.out`]: date, // চেক আউট সময় সংযুক্ত করা
+                },
+              }
+            );
           }
+
+          res.status(200).send({
+            message: "Last attendance updated to check-out successfully!",
+          });
         } else {
           const newAttendance = {
             check: "in",
-            in: new Date(),
-            out: "", // চেক আউট ফাঁকা রাখুন
+            in: date,
+            out: "",
           };
-
-          const updatedTeacher = await Teachers.updateOne(
-            { _id: new ObjectId(id) },
-            { $push: { attendance: newAttendance } } // অ্যারেতে নতুন অবজেক্ট যোগ করুন
-          );
+          if (
+            teacher?.attendance[lastIndex]?.in?.toISOString()?.slice(0, 10) ===
+            date.toISOString().slice(0, 10)
+          ) {
+            return res
+              .status(500)
+              .send({ message: "Already Today Attendance Done" });
+          } else {
+            const updatedTeacher = await Teachers.updateOne(
+              { _id: new ObjectId(id) },
+              { $push: { attendance: newAttendance } } // অ্যারেতে নতুন অবজেক্ট যোগ করুন
+            );
+          }
 
           res
             .status(200)
@@ -1518,16 +1540,17 @@ async function run() {
     });
 
     // update the currStatus.
-    app.patch("/set-open-application/:id", verifyToken, async (req, res) => {
+    app.patch("/set-open-contact/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-      console.log("id", id);
 
       try {
-        await Application.updateOne(
+        const result = await Application.updateOne(
           { _id: new ObjectId(id) },
           { $set: { currStatus: "opened" } }
         );
-
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Application not found" });
+        }
         res.status(200).send({ message: `Application status updated` });
       } catch (error) {
         console.error("Error updating application status:", error);
