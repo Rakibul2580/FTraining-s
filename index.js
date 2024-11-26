@@ -1540,7 +1540,7 @@ async function run() {
     });
 
     // update the currStatus.
-    app.patch("/set-open-application /:id", verifyToken, async (req, res) => {
+    app.patch("/set-open-application/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       try {
