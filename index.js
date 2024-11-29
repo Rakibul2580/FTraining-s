@@ -669,10 +669,11 @@ async function run() {
 
       try {
         const data = await Students.updateMany(
-          { Class: String(formdata.selectedClass) },
+          { Class: String(formdata.selectedClass.class) },
           {
             $set: {
-              [`homeworks.${formdata.subject}`]: formdata.homeWork,
+              [`homeworks.${formdata.selectedClass.subject}`]:
+                formdata.homeWork,
             },
           },
           { returnDocument: "after" }
