@@ -665,23 +665,33 @@ async function run() {
     // update homework to all student (Saroar)
     // used in "dashboard/AssignedStudents"
     app.post("/student/assign-homework", async (req, res) => {
-      const formdata = req.body;
+      const { selectedClass, selectedSubject, homeWork } = req.body;
+
+      console.log("Received Data:", req.body);
 
       try {
-        const data = await Students.updateMany(
-          { Class: String(formdata.selectedClass.class) },
+        // Update homework for all students in the specified class
+        const updatedStudents = await Students.updateMany(
+          { Class: String(selectedClass) }, // Ensure the field matches the `Class` type in DB
           {
             $set: {
-              [`homeworks.${formdata.selectedClass.subject}`]:
-                formdata.homeWork,
+              [`homeworks.${selectedSubject}`]: homeWork,
             },
           },
-          { returnDocument: "after" }
+          { returnDocument: "after" } // Optional: to retrieve updated documents
         );
 
-        res.status(200).json({ msg: "success", data });
+        if (updatedStudents.modifiedCount > 0) {
+          res
+            .status(200)
+            .json({ msg: "Homework updated successfully!", updatedStudents });
+        } else {
+          res
+            .status(404)
+            .json({ msg: "No students found for the specified class." });
+        }
       } catch (error) {
-        console.error("Error updating student:", error);
+        console.error("Error updating homework:", error);
         res.status(500).json({ message: "Internal Server Error", error });
       }
     });
@@ -1545,13 +1555,11 @@ async function run() {
       const { id } = req.params;
 
       try {
-        const result = await Application.updateOne(
+        await Application.updateOne(
           { _id: new ObjectId(id) },
           { $set: { currStatus: "opened" } }
         );
-        if (result.modifiedCount === 0) {
-          return res.status(404).send({ message: "Application not found" });
-        }
+
         res.status(200).send({ message: `Application status updated` });
       } catch (error) {
         console.error("Error updating application status:", error);
