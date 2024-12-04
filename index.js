@@ -39,6 +39,7 @@ async function run() {
     const ExamSystem = database.collection("ExamSystem");
     const Contacts = database.collection("Contact");
     const Members = database.collection("Member");
+    const Transition = database.collection("Transition");
 
     // info
     const Info = database.collection("Info");
@@ -1119,25 +1120,34 @@ async function run() {
 
     app.get("/count-info", async (req, res) => {
       try {
+        // শিক্ষকদের মোট সংখ্যা
         const teacherCount = await Teachers.countDocuments({});
+        // শিক্ষার্থীদের মোট সংখ্যা
         const studentCount = await Students.countDocuments({});
 
+        // প্রতিটি ক্লাসের শিক্ষার্থীর সংখ্যা
         const studentCountByClass = await Students.aggregate([
-          { $group: { _id: "$Class", count: { $sum: 1 } } },
-          { $addFields: { numericId: { $toInt: "$_id" } } }, // _id কে সংখ্যা হিসেবে কনভার্ট করা
-          { $sort: { numericId: 1 } }, // এখন সংখ্যার ভিত্তিতে সাজানো হচ্ছে
-          { $project: { _id: 1, count: 1 } }, // আগের ফরম্যাটে ফেরত দিচ্ছে
+          {
+            $group: {
+              _id: "$Class", // ক্লাস অনুযায়ী গ্রুপিং
+              count: { $sum: 1 }, // প্রতিটি ক্লাসের শিক্ষার্থীর সংখ্যা যোগ করা
+            },
+          },
+          {
+            $sort: { _id: 1 }, // ক্লাসের নাম অনুযায়ী সাজানো
+          },
         ]).toArray();
 
         res.status(200).json({
           msg: "success",
-          teacherCount,
-          studentCountByClass,
-          studentCount,
+          teacherCount, // শিক্ষকের সংখ্যা
+          studentCount, // শিক্ষার্থীর সংখ্যা
+          studentCountByClass, // ক্লাস অনুযায়ী শিক্ষার্থীর সংখ্যা
         });
       } catch (error) {
-        console.log("error", error);
-        res.status(500).json({ msg: "error", error: error });
+        console.error("Error fetching count info:", error);
+        // যদি কোনো সমস্যা হয়
+        res.status(500).json({ msg: "error", error });
       }
     });
 
@@ -1426,8 +1436,16 @@ async function run() {
     app.patch("/fee/:id", verifyToken, async (req, res) => {
       const feeId = req.params.id;
       const { data, status } = req.body;
-
       try {
+        const existingData = await Info.find({}).toArray();
+
+        const income = existingData[0].Income || 0;
+        const updatedExpense = Number(income) + Number(data.payAmount); // যোগ করুন
+        await Info.updateOne(
+          { _id: existingData[0]._id },
+          { $set: { Income: updatedExpense } }
+        );
+
         const student = await Students.findOne(
           (_id = new ObjectId(data.studentId))
         );
@@ -1435,13 +1453,11 @@ async function run() {
           (fee) => fee.randomNumber === data.randomNumber
         );
         // if student amount or student payAmount dose not match
-        if (
-          student.fees[feeIndex].amount !== student.fees[feeIndex].payAmount
-        ) {
+        if (student.fees[feeIndex].amount !== data.payAmount) {
           student.fees[feeIndex].status = "again Pending";
           student.fees[feeIndex].amount =
-            Number(student.fees[feeIndex].amount) -
-            Number(student.fees[feeIndex].payAmount);
+            Number(student.fees[feeIndex].amount) - Number(data.payAmount);
+
           const result = await Students.updateOne(
             { _id: new ObjectId(data.studentId) },
             { $set: { fees: student.fees } }
@@ -1475,14 +1491,6 @@ async function run() {
         } else {
           return res.status(404).send({ message: "Fee record not found" });
         }
-        // const result = await Students.updateOne(
-        //   { _id: new ObjectId(data.studentId) },
-        //   { $set: { fees: newFees } }
-        // );
-        // const updatedFee = await Fees.updateOne(
-        //   { _id: new ObjectId(feeId) },
-        //   { $set: { status: status } }
-        // );
         res.status(200).send({ message: `Fee status updated to ${status}` });
       } catch (error) {
         console.error("Error updating fee status:", error);
@@ -1865,7 +1873,6 @@ async function run() {
     app.get("/get-syllabus", async (req, res) => {
       try {
         const data = await Syllabus.find({}).sort({ _id: -1 }).toArray();
-
         res.status(200).json({ msg: "success", data });
       } catch (error) {
         console.log("error", error);
@@ -2114,6 +2121,36 @@ async function run() {
           data,
         });
       } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    app.post("/money-transition", verifyToken, async (req, res) => {
+      const { data } = req.body;
+      try {
+        const existingData = await Info.find({}).toArray();
+
+        if (data.dataType === "Expense") {
+          const expense = existingData[0].Expense || 0;
+          const updatedExpense = Number(expense) + Number(data.amount); // বিয়োগ করুন
+          await Info.updateOne(
+            { _id: existingData[0]._id },
+            { $set: { Expense: updatedExpense } }
+          );
+        } else if (data.dataType === "Income") {
+          const income = existingData[0].Income || 0;
+          const updatedExpense = Number(income) + Number(data.amount); // যোগ করুন
+          await Info.updateOne(
+            { _id: existingData[0]._id },
+            { $set: { Income: updatedExpense } }
+          );
+        }
+
+        const insertedData = await Transition.insertOne(data);
+
+        res.status(200).json({ msg: "success", data: insertedData });
+      } catch (error) {
+        console.error("Error occurred:", error);
         res.status(500).json({ msg: "error", error });
       }
     });
