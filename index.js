@@ -2155,6 +2155,17 @@ async function run() {
       }
     });
 
+    app.get("/money-transition", verifyToken, async (req, res) => {
+      try {
+        const transition = await Transition.find(data).toArray();
+
+        res.status(200).json({ msg: "success", transition });
+      } catch (error) {
+        console.error("Error occurred:", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`);
     });
