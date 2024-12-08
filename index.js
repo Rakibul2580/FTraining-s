@@ -767,10 +767,15 @@ async function run() {
         const teachers = await Teachers.find(query, {
           projection: {
             Name: 1,
+            Email: 1,
             img: 1,
             classSchedule: 1,
             role: 1,
             mySpeech: 1,
+            joiningDate: 1,
+            socialLinks: 1,
+            education: 1,
+            about: 1,
           },
         }).toArray();
         res.send(teachers);
@@ -788,14 +793,15 @@ async function run() {
         const teacher = await Teachers.findOne(query, {
           projection: {
             Name: 1,
-            Number: 1,
             Email: 1,
             img: 1,
             classSchedule: 1,
             role: 1,
             mySpeech: 1,
-            currSalary: 1,
             joiningDate: 1,
+            socialLinks: 1,
+            education: 1,
+            about: 1,
           },
         });
         res.send(teacher);
@@ -2157,7 +2163,7 @@ async function run() {
 
     app.get("/money-transition", verifyToken, async (req, res) => {
       try {
-        const transition = await Transition.find(data).toArray();
+        const transition = await Transition.find({}).toArray();
 
         res.status(200).json({ msg: "success", transition });
       } catch (error) {
