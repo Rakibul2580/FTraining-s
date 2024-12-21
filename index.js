@@ -40,6 +40,7 @@ async function run() {
     const Contacts = database.collection("Contact");
     const Members = database.collection("Member");
     const Transition = database.collection("Transition");
+    const Admission = database.collection("Admission");
 
     // info
     const Info = database.collection("Info");
@@ -2211,6 +2212,16 @@ async function run() {
       }
     });
 
+    app.post("/Admission", async (req, res) => {
+      const { values } = req.body;
+      try {
+        const insertedData = await Admission.insertOne(values);
+        res.status(200).json({ msg: "success", data: insertedData });
+      } catch (error) {
+        console.error("Error occurred:", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`);
     });
