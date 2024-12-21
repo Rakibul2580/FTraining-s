@@ -668,8 +668,6 @@ async function run() {
     app.post("/student/assign-homework", async (req, res) => {
       const { selectedClass, selectedSubject, homeWork } = req.body;
 
-      console.log("Received Data:", req.body);
-
       try {
         // Update homework for all students in the specified class
         const updatedStudents = await Students.updateMany(
@@ -825,8 +823,9 @@ async function run() {
           if (day === 4) {
             const fridayAttendance = {
               check: "Friday",
-              in: date,
+              in: "",
               out: "",
+              date,
             };
             const Friday = await Teachers.updateOne(
               { _id: new ObjectId(id) },
@@ -861,6 +860,7 @@ async function run() {
             check: "in",
             in: date,
             out: "",
+            date,
           };
           if (
             teacher?.attendance[lastIndex]?.in?.toISOString()?.slice(0, 10) ===
@@ -880,6 +880,45 @@ async function run() {
             .status(200)
             .send({ message: "New check-in entry added successfully!" });
         }
+      } catch (error) {
+        console.error("Error updating attendance:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.patch("/head/Attendance/:id", async (req, res) => {
+      const { id } = req.params;
+      const { type } = req.query;
+      try {
+        const inTime = new Date();
+        inTime.setHours(8, 0, 0, 0);
+        const outTime = new Date();
+        outTime.setHours(16, 0, 0, 0);
+        const newAttendance = {
+          check: "out",
+          in: "",
+          out: "",
+          date: new Date(),
+        };
+
+        if (type === "Working") {
+          newAttendance.check = "out";
+          newAttendance.in = inTime;
+          newAttendance.out = outTime;
+        } else if (type === "Sick") {
+          newAttendance.check = "Sick";
+        } else if (type === "Absent") {
+          newAttendance.check = "Absent";
+        } else if (type === "Vacation") {
+          newAttendance.check = "Vacation";
+        }
+        const updatedTeacher = await Teachers.updateOne(
+          { _id: new ObjectId(id) },
+          { $push: { attendance: newAttendance } } // অ্যারেতে নতুন অবজেক্ট যোগ করুন
+        );
+        res
+          .status(200)
+          .send({ message: "New check-in entry added successfully!" });
       } catch (error) {
         console.error("Error updating attendance:", error);
         res.status(500).send({ message: "Internal Server Error" });
