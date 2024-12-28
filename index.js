@@ -2105,7 +2105,7 @@ async function run() {
 
     // mark contac as replied or not (Saroar)
     // used in "/Contact"
-    app.patch("/contact/change-status", async (req, res) => {
+    app.patch("/contact/change-status", verifyToken, async (req, res) => {
       const formdata = req.body;
 
       try {
@@ -2219,6 +2219,50 @@ async function run() {
         res.status(200).json({ msg: "success", data: insertedData });
       } catch (error) {
         console.error("Error occurred:", error);
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    app.get("/Admission", verifyToken, async (req, res) => {
+      try {
+        const data = await Admission.find().toArray();
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
+        res.status(500).json({ msg: "error", error });
+      }
+    });
+
+    app.delete("/Admission/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      try {
+        const data = await Admission.deleteOne({ _id: new ObjectId(id) });
+        if (data.deletedCount === 1) {
+          res.status(200).json({ msg: "Admission deleted successfully", data });
+        } else {
+          res.status(404).json({ msg: "Admission not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ msg: "Error deleting admission", error });
+      }
+    });
+
+    app.patch("/Admission/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const data = await Admission.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status: "Replied",
+            },
+          }
+        );
+
+        res.status(200).json({ msg: "success", data });
+      } catch (error) {
         res.status(500).json({ msg: "error", error });
       }
     });
