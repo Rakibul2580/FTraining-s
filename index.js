@@ -824,7 +824,7 @@ async function run() {
           if (day === 4) {
             const fridayAttendance = {
               check: "Friday",
-              in: "",
+              in: date,
               out: "",
               date,
             };
@@ -897,7 +897,7 @@ async function run() {
         outTime.setHours(16, 0, 0, 0);
         const newAttendance = {
           check: "out",
-          in: "",
+          in: new Date(),
           out: "",
           date: new Date(),
         };
