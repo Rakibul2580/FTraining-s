@@ -221,16 +221,14 @@ async function run() {
         const y = x - (x * 2) / 100;
         res.send({
           y,
-          message: "Server is running successfully!",
+          message: "Server is running successfully",
+          Test: process.env.EMAIL_USER,
         });
       } catch (error) {
         console.error("Error in GET route:", error);
-        res
-          .status(500)
-          .send({
-            message: "Internal Server Error",
-            Test: process.env.EMAIL_USER,
-          });
+        res.status(500).send({
+          message: "Internal Server Error",
+        });
       }
     });
 
