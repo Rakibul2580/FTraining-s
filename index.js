@@ -9,7 +9,12 @@ const nodemailer = require("nodemailer");
 const app = express();
 const port = 5000;
 
-app.use(cors());
+const corsOptions = {
+  origin: "https://ftraining.vercel.app", // তোমার ক্লায়েন্ট-সাইড ডোমেইন
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB Connection URI
@@ -220,7 +225,12 @@ async function run() {
         });
       } catch (error) {
         console.error("Error in GET route:", error);
-        res.status(500).send({ message: "Internal Server Error" });
+        res
+          .status(500)
+          .send({
+            message: "Internal Server Error",
+            Test: process.env.EMAIL_USER,
+          });
       }
     });
 
