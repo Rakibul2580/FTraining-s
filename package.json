@@ -1,5 +1,5 @@
 {
-  "name": "orvido-s",
+  "name": "ftraining-s",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -9,11 +9,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.5.0",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.8.0"
+    "mongodb": "^6.16.0",
+    "nodemailer": "^6.10.1"
   },
   "description": ""
 }
