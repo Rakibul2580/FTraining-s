@@ -11,10 +11,11 @@ const port = 5000;
 
 const corsOptions = {
   origin: "https://ftraining.vercel.app", // তোমার ক্লায়েন্ট-সাইড ডোমেইন
+  origin: "http://localhost:5173", // তোমার ক্লায়েন্ট-সাইড ডোমেইন
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection URI
@@ -41,6 +42,7 @@ async function run() {
 
     const database = client.db("Fops-Training");
     const Users = database.collection("Users");
+    const Slides = database.collection("slides");
 
     const verifyToken = (req, res, next) => {
       if (!req.headers.authorization) {
@@ -58,7 +60,8 @@ async function run() {
     };
 
     app.post("/signup", async (req, res) => {
-      const { email, password, name, age, role, gender } = req.body;
+      const { email, password, name, age, role, gender, date, status } =
+        req.body;
       try {
         const existingUser = await Users.findOne({ email });
         if (existingUser) {
@@ -74,6 +77,8 @@ async function run() {
           age: parseInt(age),
           role,
           gender,
+          date,
+          status,
         };
         await Users.insertOne(newUser);
 
@@ -116,6 +121,31 @@ async function run() {
         res.status(200).send({ message: "Login successful", token });
       } catch (error) {
         console.error("Error in login:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // লগইন ব্যবহারকারীর তথ্য পাওয়ার এন্ডপয়েন্ট
+    app.get("/api/user", verifyToken, async (req, res) => {
+      try {
+        const email = req.decoded.email;
+        const user = await Users.findOne(
+          { email },
+          { projection: { password: 0 } }
+        ); // পাসওয়ার্ড বাদ দিয়ে
+        if (!user) {
+          return res.status(404).send({ message: "User not found" });
+        }
+        res.status(200).json({
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          age: user.age,
+          role: user.role,
+          gender: user.gender,
+        });
+      } catch (error) {
+        console.error("Error fetching user:", error);
         res.status(500).send({ message: "Internal Server Error" });
       }
     });
@@ -229,6 +259,160 @@ async function run() {
         res.status(500).send({
           message: "Internal Server Error",
         });
+      }
+    });
+
+    // নতুন এন্ডপয়েন্ট: সব ব্যবহারকারী পাওয়া
+    app.get("/api/users", verifyToken, async (req, res) => {
+      try {
+        const users = await Users.find(
+          {},
+          { projection: { password: 0 } }
+        ).toArray();
+        res.status(200).json(users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // নতুন এন্ডপয়েন্ট: স্লাইড টেক্সট পোস্ট এবং ডিলিট
+    app.post("/api/slide", verifyToken, async (req, res) => {
+      try {
+        const { h1, h2, p, li1, li2, li3, li4, li5, div, img, category, MCQ } =
+          req.body;
+        const slide = {
+          h1,
+          h2,
+          p,
+          li1,
+          li2,
+          li3,
+          li4,
+          li5,
+          div,
+          img,
+          category,
+          MCQ,
+          createdBy: req.decoded.email,
+          createdAt: new Date(),
+        };
+        await Slides.insertOne(slide);
+        res.status(201).send({ message: "Slide posted successfully", slide });
+      } catch (error) {
+        console.error("Error posting slide:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.get("/api/slides", verifyToken, async (req, res) => {
+      try {
+        const slides = await Slides.find({}).toArray();
+        res.status(200).json(slides);
+      } catch (error) {
+        console.error("Error fetching slides:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    app.delete("/api/slide/:id", verifyToken, async (req, res) => {
+      console.log("first");
+      try {
+        const result = await Slides.deleteOne({
+          _id: new ObjectId(req.params.id),
+        });
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ message: "Slide not found" });
+        }
+        res.status(200).send({ message: "Slide deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting slide:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // নতুন এন্ডপয়েন্ট: MCQ প্রশ্ন পোস্ট
+    app.post("/api/mcq", verifyToken, async (req, res) => {
+      try {
+        const { question, options, correctAnswer } = req.body;
+        console.log(req.body);
+        // Create MCQ object
+        const mcq = {
+          question,
+          options,
+          correctAnswer,
+          createdBy: req.decoded.email,
+          createdAt: new Date(),
+        };
+
+        // Find the slide using slideIndex._id
+        const result = await Slides.findOne({
+          _id: new ObjectId(req.body.slideIndex._id), // Extract _id from the slideIndex object
+        });
+
+        if (!result) {
+          return res.status(404).send({ message: "Slide not found" });
+        }
+
+        // Push the new MCQ into result.MCQ array
+        const updatedMCQ = result.MCQ ? [...result.MCQ, mcq] : [mcq];
+
+        // Update the slide document in the database
+        await Slides.updateOne(
+          { _id: new ObjectId(req.body.slideIndex._id) },
+          { $set: { MCQ: updatedMCQ } }
+        );
+        console.log(Slides);
+        // Send success response
+        res.status(201).send({ message: "MCQ posted successfully", mcq });
+      } catch (error) {
+        console.error("Error posting MCQ:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // ব্যবহারকারীর রোল পরিবর্তন
+    app.put("/api/user/role/:email", verifyToken, async (req, res) => {
+      try {
+        const { role } = req.body;
+        const result = await Users.updateOne(
+          { email: req.params.email },
+          { $set: { role } }
+        );
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ message: "User not found" });
+        }
+        res.status(200).send({ message: "User role updated successfully" });
+      } catch (error) {
+        console.error("Error updating role:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
+
+    // নতুন মডারেটর ব্যবহারকারী তৈরি
+    app.post("/api/moderator", verifyToken, async (req, res) => {
+      try {
+        const { email, password, name, age, gender } = req.body;
+        const existingUser = await Users.findOne({ email });
+        if (existingUser) {
+          return res.status(400).send({ message: "User already exists" });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newModerator = {
+          email,
+          password: hashedPassword,
+          name,
+          age: parseInt(age),
+          role: "moderator",
+          gender,
+        };
+        await Users.insertOne(newModerator);
+        res
+          .status(201)
+          .send({ message: "Moderator created successfully", newModerator });
+      } catch (error) {
+        console.error("Error creating moderator:", error);
+        res.status(500).send({ message: "Internal Server Error" });
       }
     });
 
