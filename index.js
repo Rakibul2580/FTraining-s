@@ -154,14 +154,7 @@ async function run() {
         if (!user) {
           return res.status(404).send({ message: "User not found" });
         }
-        res.status(200).json({
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          age: user.age,
-          role: user.role,
-          gender: user.gender,
-        });
+        res.status(200).json(user);
       } catch (error) {
         console.error("Error fetching user:", error);
         res.status(500).send({ message: "Internal Server Error" });
