@@ -161,7 +161,6 @@ async function run() {
           age: user.age,
           role: user.role,
           gender: user.gender,
-          test: "test",
           courses: user.courses,
         });
       } catch (error) {
