@@ -68,8 +68,17 @@ async function run() {
     };
 
     app.post("/signup", async (req, res) => {
-      const { email, password, name, age, role, gender, date, status } =
-        req.body;
+      const {
+        email,
+        password,
+        name,
+        courses,
+        age,
+        role,
+        gender,
+        date,
+        status,
+      } = req.body;
       try {
         const existingUser = await Users.findOne({ email });
         if (existingUser) {
@@ -87,6 +96,7 @@ async function run() {
           gender,
           date,
           status,
+          courses,
         };
         await Users.insertOne(newUser);
 
