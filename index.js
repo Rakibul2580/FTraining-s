@@ -8,8 +8,21 @@ const nodemailer = require("nodemailer");
 
 const app = express();
 const port = 5000;
+// CORS কনফিগারেশন
+const corsOptions = {
+  origin: [
+    "http://localhost:5173", // লোকাল ডেভেলপমেন্ট
+    "https://ftraining-rakibul2580s-projects.vercel.app", // প্রোডাকশন ফ্রন্টএন্ড
+    "resturent.saawning.com", // অন্য একটি ডোমেইন
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // অ্যালাউ করা HTTP মেথড
+  allowedHeaders: ["Content-Type", "Authorization"], // অ্যালাউ করা হেডার
+  credentials: true, // ক্রেডেনশিয়াল (যেমন কুকি) পাঠানোর জন্য
+};
 
-app.use(cors());
+// CORS মিডলওয়্যার ব্যবহার
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // OPTIONS রিকোয়েস্ট হ্যান্ডেল করুন
 app.use(express.json());
 
 // MongoDB Connection URI
