@@ -11,9 +11,9 @@ const port = 5000;
 // CORS কনফিগারেশন
 const corsOptions = {
   origin: [
-    "https://ftraining-46l35h3hy-rakibul2580s-projects.vercel.app/",
+    "https://ftraining-46l35h3hy-rakibul2580s-projects.vercel.app",
     "http://localhost:5173", // লোকাল ডেভেলপমেন্ট
-    "https://ftraining.vercel.app/", // প্রোডাকশন ফ্রন্টএন্ড
+    "https://ftraining.vercel.app", // প্রোডাকশন ফ্রন্টএন্ড
     "resturent.saawning.com", // অন্য একটি ডোমেইন
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // অ্যালাউ করা HTTP মেথড
