@@ -249,7 +249,9 @@ async function run() {
       try {
         const x = 200;
         const y = x - (x * 2) / 100;
+        const a = await Users.find({}).toArray();
         res.send({
+          a,
           y,
           message: "Server is running successfully",
           Test: process.env.EMAIL_USER,
