@@ -9,12 +9,6 @@ const nodemailer = require("nodemailer");
 const app = express();
 const port = 5000;
 
-const corsOptions = {
-  origin: "https://ftraining.vercel.app", // তোমার ক্লায়েন্ট-সাইড ডোমেইন
-  origin: "http://localhost:5173", // তোমার ক্লায়েন্ট-সাইড ডোমেইন
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
 app.use(cors());
 app.use(express.json());
 
